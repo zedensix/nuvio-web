@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.34](https://github.com/zedensix/nuvio-web/compare/v1.0.33...v1.0.34) (2026-11-16)
+
+### Bug Fixes
+
+* **player:** carry the picked audio and subtitle languages to the next episode ([73c5e45](https://github.com/zedensix/nuvio-web/commit/73c5e45557d44de6d92698c6bc471f68cee2ce79))
+*  switch remuxed audio in place ([7cf4e46](https://github.com/zedensix/nuvio-web/commit/7cf4e467ef3d0781cae9ba21d0c0077a791b2844))
+* **player:** resume mpv at the saved position and fullscreen the app window under it ([5791e68](https://github.com/zedensix/nuvio-web/commit/5791e68184de82d53a0e1b7397c2e5236ca810ee))
+
 ## [1.0.33](https://github.com/zedensix/nuvio-web/compare/v1.0.32...v1.0.33) (2026-11-12)
 
 ### Features
