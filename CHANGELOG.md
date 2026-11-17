@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.35](https://github.com/zedensix/nuvio-web/compare/v1.0.34...v1.0.35) (2026-11-17)
+
+### Bug Fixes
+
+* handle uncached streams ([4d91949](https://github.com/zedensix/nuvio-web/commit/4d919498cd81332b156dba19031cfc1315695be2))
+
 ## [1.0.34](https://github.com/zedensix/nuvio-web/compare/v1.0.33...v1.0.34) (2026-11-16)
 
 ### Bug Fixes
