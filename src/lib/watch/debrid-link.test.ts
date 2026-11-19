@@ -51,6 +51,18 @@ describe("debridLinkStatus", () => {
 		expect(await debridLinkStatus(LINK, fetchImpl)).toBe("failed");
 	});
 
+	it("still answers when the body can't be cancelled", async () => {
+		const locked = (status: number) => {
+			const response = new Response("x", { status });
+			Object.defineProperty(response, "body", {
+				value: { cancel: () => Promise.reject(new Error("locked")) },
+			});
+			return response;
+		};
+		expect(await debridLinkStatus(LINK, answering(locked(206)))).toBe("ready");
+		expect(await debridLinkStatus(LINK, answering(locked(502)))).toBe("failed");
+	});
+
 	it("asks for one byte and forwards the addon's headers", async () => {
 		let sent: Headers | undefined;
 		const fetchImpl = (async (_url: string, init: RequestInit) => {

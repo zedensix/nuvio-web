@@ -68,6 +68,7 @@ vi.mock("./manifest.ts", async (importOriginal) => ({
 // hands it this request's client and registry.
 vi.mock("./catalog-queries.ts", () => ({
 	homeCatalogRows: vi.fn(async () => [{ marker: "home" }]),
+	homeCatalogSlots: vi.fn(async () => [{ marker: "slots" }]),
 	searchAllCatalogs: vi.fn(async (_c: unknown, _r: unknown, term: string) => ({
 		metas: [{ id: term }],
 	})),
@@ -99,6 +100,7 @@ import {
 	getAddonClient,
 	getRegistry,
 	homeCatalogRows,
+	homeCatalogSlots,
 	installedAddonRows,
 	invalidateRegistry,
 	listCatalogs,
@@ -360,6 +362,7 @@ describe("getAddonClient", () => {
 describe("request-scoped wrappers", () => {
 	it("delegate to catalog-queries with this request's client", async () => {
 		expect(await homeCatalogRows()).toEqual([{ marker: "home" }]);
+		expect(await homeCatalogSlots()).toEqual([{ marker: "slots" }]);
 		expect(await searchAllCatalogs("dune")).toEqual({
 			metas: [{ id: "dune" }],
 		});
@@ -382,6 +385,7 @@ describe("request-scoped wrappers", () => {
 
 		for (const query of [
 			queries.homeCatalogRows,
+			queries.homeCatalogSlots,
 			queries.searchAllCatalogs,
 			queries.similarToTitle,
 			queries.catalogPage,

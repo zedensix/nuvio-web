@@ -134,6 +134,13 @@ describe("profileData", () => {
 		]);
 		expect(await data.progress()).toEqual([]);
 		expect(await data.history()).toEqual([]);
+		expect(await data.historyPage(1, 10)).toEqual({
+			records: [],
+			total: 0,
+			page: 1,
+			pageCount: 1,
+		});
+		expect(await data.historyOf(["tt1", "tt1"])).toEqual([]);
 		expect(ensure).toHaveBeenCalledTimes(1);
 	});
 
@@ -144,6 +151,14 @@ describe("profileData", () => {
 		expect(
 			await profileData(locals({ profileId: null }), fetch).progress(),
 		).toEqual([]);
+		const none = profileData(locals({ session: null }), fetch);
+		expect(await none.historyPage(2, 10)).toEqual({
+			records: [],
+			total: 0,
+			page: 1,
+			pageCount: 1,
+		});
+		expect(await none.historyOf(["tt1"])).toEqual([]);
 	});
 });
 
