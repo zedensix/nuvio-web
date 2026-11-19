@@ -3,8 +3,10 @@ import { getAddonClient, titleMeta } from "#lib/addons/server.js";
 import { safeRequestHeaders } from "#lib/core/request-headers.js";
 import { requireProfile } from "#lib/server/guards.js";
 import { pinnedFetch } from "#lib/server/safe-fetch.js";
-import { query } from "$app/server";
+import { CACHE } from "#lib/services/index.js";
+import { command, query } from "$app/server";
 import { debridLinkStatus } from "./debrid-link.ts";
+import { lastLinkSchema, writeLastLink } from "./last-links.ts";
 import { pullPlaybackMeta, pullSubtitles, shapeStream } from "./watch-data.ts";
 
 /**
@@ -67,3 +69,13 @@ export const getSubtitles = query(
 	v.object({ type: v.string(), id: v.string() }),
 	async (video) => pullSubtitles((await getAddonClient()).client, video),
 );
+
+/** Keeps the stream that just played, for "reuse last link" on any device. */
+export const rememberLastLink = command(lastLinkSchema, async (stream) => {
+	const { event, accountKey, profileId } = requireProfile();
+	await writeLastLink(
+		event.locals.services.get(CACHE),
+		{ accountKey, profileId },
+		stream,
+	);
+});

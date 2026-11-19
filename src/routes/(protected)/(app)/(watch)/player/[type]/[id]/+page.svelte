@@ -60,7 +60,7 @@
 		type ResolvedStream,
 		riskyVideoCodec,
 	} from "#lib/watch/stream-format.js";
-	import { resolveStreams } from "#lib/watch/watch.remote.js";
+	import { rememberLastLink, resolveStreams } from "#lib/watch/watch.remote.js";
 	import { EMPTY_PROVIDERS } from "#lib/watch/watch-providers.js";
 	import { watchProviders } from "#lib/watch/watch-providers.remote.js";
 	import WatchProvidersList from "#lib/watch/watch-providers-list.svelte";
@@ -204,15 +204,21 @@
 		}
 	}
 
+	// What last played this video on any of this profile's devices.
+	const rememberedElsewhere = streamed(() => data.lastLink, null);
 	// The stream just picked in the drawer; else the one the URL names; else the
-	// tab's last pick; else a remembered link (if "reuse last link" is on and
-	// it's still fresh); else resolve one here on a cold load.
+	// tab's last pick; else a fresh remembered link ("reuse last link"); else
+	// resolve one here on a cold load.
 	const handed = $derived(
 		playbackHandoff.fresh(id) ??
 			recallPick(id, restored.stream, theme.current.linkCacheDays) ??
 			playbackHandoff.take(id) ??
 			(theme.current.reuseLastLink
-				? recallLink(id, theme.current.linkCacheDays)
+				? recallLink(
+						id,
+						theme.current.linkCacheDays,
+						rememberedElsewhere.current,
+					)
 				: null),
 	);
 	// The load resolves them; a URL naming a stream this browser doesn't hold
@@ -240,9 +246,10 @@
 			pickPreferredStream(streams ?? [], theme.current.preferredQuality),
 	);
 
+	// Waits on the remembered link (a quick cache read): it can't swap streams mid-play.
 	const active = $derived(
 		handed ??
-			(autoStream
+			(autoStream && (!theme.current.reuseLastLink || rememberedElsewhere.ready)
 				? selectedStream(id, autoStream, describeStream(autoStream).title)
 				: null),
 	);
@@ -448,6 +455,7 @@
 				if (!linkRemembered && position > 2 && stream) {
 					linkRemembered = true;
 					rememberLink(stream);
+					rememberLastLink($state.snapshot(stream)).catch(() => undefined);
 				}
 			}
 			if (!known) {

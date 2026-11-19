@@ -1,5 +1,6 @@
 import { readJsonCapped, safeFetch } from "#lib/server/safe-fetch.js";
-import { TtlCache } from "./cache.ts";
+import type { Cache } from "#lib/services/cache.service.js";
+import { addonCacheKey } from "./cache-key.ts";
 import type {
 	AddonManifest,
 	AddonResourceName,
@@ -9,7 +10,6 @@ import type {
 } from "./types.ts";
 
 const MANIFEST_TTL_MS = 30 * 60 * 1000;
-const manifestCache = new TtlCache<AddonManifest>(MANIFEST_TTL_MS);
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 
 const RESOURCE_NAMES: AddonResourceName[] = [
@@ -198,12 +198,14 @@ export async function fetchManifest(
 	{
 		timeoutMs = 10_000,
 		force = false,
-	}: { timeoutMs?: number; force?: boolean } = {},
+		cache,
+	}: { timeoutMs?: number; force?: boolean; cache?: Cache } = {},
 ): Promise<FetchedManifest> {
 	const { baseUrl, manifestUrl } = parseAddonUrl(rawUrl);
+	const key = addonCacheKey("manifest", baseUrl);
 
-	if (!force) {
-		const cached = manifestCache.get(baseUrl);
+	if (cache && !force) {
+		const cached = await cache.get<AddonManifest>(key);
 		if (cached) {
 			return { manifest: cached, baseUrl };
 		}
@@ -224,10 +226,6 @@ export async function fetchManifest(
 	const manifest = validateManifest(
 		await readJsonCapped(response, MAX_MANIFEST_BYTES),
 	);
-	manifestCache.set(baseUrl, manifest);
+	await cache?.set(key, manifest, MANIFEST_TTL_MS);
 	return { manifest, baseUrl };
-}
-
-export function clearManifestCache(): void {
-	manifestCache.clear();
 }

@@ -13,6 +13,7 @@ vi.mock("#lib/server/safe-fetch.js", async (importOriginal) => ({
 	},
 }));
 
+import { MemoryCache } from "#lib/services/cache.service.js";
 import { AddonClient } from "./client.ts";
 import { AddonRegistry, type InstalledAddon } from "./registry.ts";
 import type { AddonManifest, Meta } from "./types.ts";
@@ -305,8 +306,7 @@ describe("getMeta", () => {
 						{ meta: { id: "tt0213338", type: "series", name: "Bebop" } },
 					],
 				]),
-				15_000,
-				{ warn },
+				{ logger: { warn } },
 			).getMeta("series", "tt0213338");
 			expect(result?.meta.name).toBe("Bebop");
 			expect(result?.addon.manifest.id).toBe("org.two");
@@ -744,5 +744,69 @@ describe("getAddonCatalog", () => {
 			description: "A directory",
 			types: [],
 		});
+	});
+});
+
+describe("caching", () => {
+	function cachedClient(fetchImpl: typeof fetch, cache = new MemoryCache()) {
+		return new AddonClient(new AddonRegistry([installed()]), fetchImpl, {
+			cache,
+		});
+	}
+
+	it("keeps catalog, meta and subtitle answers", async () => {
+		const fetchImpl = vi.fn(
+			fetchStub([
+				["/catalog/", { metas: [{ id: "tt1", type: "movie", name: "One" }] }],
+				["/meta/", { meta: { id: "tt1", type: "movie", name: "One" } }],
+				["/subtitles/", { subtitles: [] }],
+			]),
+		);
+		const addons = cachedClient(fetchImpl);
+		for (let round = 0; round < 2; round++) {
+			await addons.getCatalog({ type: "movie", id: "top" });
+			await addons.getMeta("movie", "tt1");
+			await addons.getSubtitles("movie", "tt1");
+		}
+		expect(fetchImpl).toHaveBeenCalledTimes(3);
+	});
+
+	it("never keeps a stream list", async () => {
+		const fetchImpl = vi.fn(
+			fetchStub([["/stream/", { streams: [{ url: "https://a/1" }] }]]),
+		);
+		const addons = cachedClient(fetchImpl);
+		await addons.getStreams("movie", "tt1");
+		await addons.getStreams("movie", "tt1");
+		expect(fetchImpl).toHaveBeenCalledTimes(2);
+	});
+
+	it("follows the addon's Cache-Control", async () => {
+		vi.useFakeTimers();
+		try {
+			let header = "no-store";
+			const fetchImpl = vi.fn(
+				async () =>
+					new Response(JSON.stringify({ metas: [] }), {
+						headers: { "cache-control": header },
+					}),
+			) as unknown as typeof fetch;
+			const addons = cachedClient(fetchImpl);
+			const catalog = () => addons.getCatalog({ type: "movie", id: "top" });
+
+			await catalog();
+			await catalog();
+			expect(fetchImpl).toHaveBeenCalledTimes(2);
+
+			header = "public, max-age=30";
+			await catalog();
+			await catalog();
+			expect(fetchImpl).toHaveBeenCalledTimes(3);
+			vi.advanceTimersByTime(30_000);
+			await catalog();
+			expect(fetchImpl).toHaveBeenCalledTimes(4);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

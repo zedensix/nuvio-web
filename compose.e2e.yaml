@@ -7,9 +7,20 @@ services:
       context: .
     container_name: nuvio-e2e
     network_mode: bridge
+    # The default bridge has no service DNS: a link names the cache.
+    links:
+      - redis
     ports:
       - 3000:3000
     environment:
       NUVIO_E2E: "1"
       NUVIO_ADMIN_EMAILS: ${NUVIO_ADMIN_EMAILS:-}
       NUVIO_SESSION_SECRET: ${NUVIO_SESSION_SECRET:-}
+      # The cache as compose.yaml ships it, so e2e runs the Redis client.
+      NUVIO_REDIS_URL: redis://redis:6379
+
+  redis:
+    image: redis:8-alpine
+    container_name: nuvio-e2e-redis
+    network_mode: bridge
+    command: ["redis-server", "--save", "", "--appendonly", "no"]

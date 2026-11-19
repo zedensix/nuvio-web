@@ -1,7 +1,7 @@
 import type { NuvioClient } from "#lib/nuvio/index.js";
 import { requireProfile } from "#lib/server/guards.js";
 import { pinnedFetch } from "#lib/server/safe-fetch.js";
-import { LOGGER } from "#lib/services/index.js";
+import { CACHE, LOGGER } from "#lib/services/index.js";
 import { pullHomeLayout } from "#lib/settings/settings-data.js";
 import { getRequestEvent } from "$app/server";
 import * as queries from "./catalog-queries.ts";
@@ -86,7 +86,11 @@ export async function getRegistry(): Promise<{
 	if (!userId) {
 		const owner = await addonOwner(event.locals.nuvio, profileId);
 		const rows = await event.locals.nuvio.addons.list(owner.profileId);
-		return await buildRegistry(rows, pinnedFetch);
+		return await buildRegistry(
+			rows,
+			pinnedFetch,
+			event.locals.services.get(CACHE),
+		);
 	}
 	const key = cacheKey(userId, profileId);
 	const hit = cache.get(key);
@@ -98,7 +102,11 @@ export async function getRegistry(): Promise<{
 	const generation = generations.get(userId) ?? 0;
 	const owner = await addonOwner(event.locals.nuvio, profileId);
 	const rows = await event.locals.nuvio.addons.list(owner.profileId);
-	const built = await buildRegistry(rows, pinnedFetch);
+	const built = await buildRegistry(
+		rows,
+		pinnedFetch,
+		event.locals.services.get(CACHE),
+	);
 	if ((generations.get(userId) ?? 0) === generation) {
 		pruneExpired();
 		cache.set(key, { at: Date.now(), ...built });
@@ -174,13 +182,12 @@ export async function getAddonClient(): Promise<{
 	errors: AddonLoadError[];
 }> {
 	const { registry, errors } = await getRegistry();
+	const { services } = getRequestEvent().locals;
 	return {
-		client: new AddonClient(
-			registry,
-			pinnedFetch,
-			undefined,
-			getRequestEvent().locals.services.get(LOGGER),
-		),
+		client: new AddonClient(registry, pinnedFetch, {
+			logger: services.get(LOGGER),
+			cache: services.get(CACHE),
+		}),
 		registry,
 		errors,
 	};
@@ -287,9 +294,11 @@ export type AddonDetails =
 
 /** One addon's manifest, through the same capped, SSRF-guarded fetch as installing it. */
 export async function addonDetails(url: string): Promise<AddonDetails> {
-	requireProfile();
+	const { event } = requireProfile();
 	try {
-		const { manifest, baseUrl } = await fetchManifest(url, pinnedFetch);
+		const { manifest, baseUrl } = await fetchManifest(url, pinnedFetch, {
+			cache: event.locals.services.get(CACHE),
+		});
 		return { ok: true, baseUrl, manifest };
 	} catch (cause) {
 		return { ok: false, reason: loadFailure(cause) };

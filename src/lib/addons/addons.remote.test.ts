@@ -183,7 +183,7 @@ describe("previewAddon", () => {
 		expect(state.fetchManifest).toHaveBeenCalledWith(
 			"https://x/manifest.json",
 			pinnedFetch,
-			{ force: true },
+			expect.objectContaining({ force: true }),
 		);
 	});
 

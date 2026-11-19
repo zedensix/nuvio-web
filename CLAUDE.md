@@ -142,7 +142,9 @@ When a new module doesn't obviously belong to a feature, that's a signal it's
 `src/lib/services/` holds the things that own state, dependencies, or a
 lifecycle : the database handle, the logger, the session cookie and the
 server-side session store behind it, the admin allowlist, the request budget,
-the people lookup. Each is a class taking its collaborators as constructor
+the people lookup, the cache (`CACHE`: memory, or Redis with `NUVIO_REDIS_URL`;
+a miss or an outage only costs a refetch, so never store anything there you
+can't fetch again). Each is a class taking its collaborators as constructor
 arguments, registered against a token and resolved from a `Container`.
 
 **Two composition roots, and they must not meet.** `services/server.ts` reads

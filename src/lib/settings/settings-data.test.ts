@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NuvioClient } from "#lib/nuvio/index.js";
+import { MemoryCache } from "#lib/services/cache.service.js";
 import {
 	forgetShellSettings,
 	pullSettingsBlob,
@@ -36,6 +37,10 @@ describe("pullSettingsBlob", () => {
 });
 
 describe("pullShellSettings", () => {
+	let cache = new MemoryCache();
+	beforeEach(() => {
+		cache = new MemoryCache();
+	});
 	let account = 0;
 	// A fresh account per test: the cache is process-wide.
 	const owner = () => `account-${++account}`;
@@ -68,7 +73,7 @@ describe("pullShellSettings", () => {
 				},
 			},
 		});
-		const { ui, appAudio } = await pullShellSettings(nuvio, owner(), 1);
+		const { ui, appAudio } = await pullShellSettings(nuvio, cache, owner(), 1);
 		expect(ui.accent).toBe("green");
 		expect(ui.watchRegion).toBe("auto");
 		expect(ui.mode).toBe(DEFAULT_UI_SETTINGS.mode);
@@ -79,16 +84,14 @@ describe("pullShellSettings", () => {
 		vi.useFakeTimers();
 		const { nuvio, pull } = nuvioByPlatform({});
 		const account = owner();
-		await Promise.allSettled([
-			pullShellSettings(nuvio, account, 1),
-			pullShellSettings(nuvio, account, 1),
-		]);
+		await pullShellSettings(nuvio, cache, account, 1);
+		await pullShellSettings(nuvio, cache, account, 1);
 		expect(pull).toHaveBeenCalledTimes(2);
-		await pullShellSettings(nuvio, account, 2);
-		await pullShellSettings(nuvio, owner(), 1);
+		await pullShellSettings(nuvio, cache, account, 2);
+		await pullShellSettings(nuvio, cache, owner(), 1);
 		expect(pull).toHaveBeenCalledTimes(6);
 		vi.advanceTimersByTime(5 * 60_000);
-		await pullShellSettings(nuvio, account, 1);
+		await pullShellSettings(nuvio, cache, account, 1);
 		expect(pull).toHaveBeenCalledTimes(8);
 	});
 
@@ -98,20 +101,40 @@ describe("pullShellSettings", () => {
 			mobile: new Error("down"),
 		});
 		const account = owner();
-		expect(await pullShellSettings(nuvio, account, 1)).toEqual({
+		expect(await pullShellSettings(nuvio, cache, account, 1)).toEqual({
 			ui: DEFAULT_UI_SETTINGS,
 			appAudio: { preferred: null, secondary: null },
 		});
-		await pullShellSettings(nuvio, account, 1);
+		await pullShellSettings(nuvio, cache, account, 1);
+		expect(pull).toHaveBeenCalledTimes(4);
+	});
+
+	it("doesn't keep a pull that a save overtook", async () => {
+		let release: () => void = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const { nuvio, pull } = nuvioByPlatform({});
+		pull.mockImplementationOnce(async () => {
+			await gate;
+			return [];
+		});
+		const account = owner();
+		const stale = pullShellSettings(nuvio, cache, account, 1);
+		await vi.waitFor(() => expect(pull).toHaveBeenCalled());
+		await forgetShellSettings(cache, account, 1);
+		release();
+		await stale;
+		await pullShellSettings(nuvio, cache, account, 1);
 		expect(pull).toHaveBeenCalledTimes(4);
 	});
 
 	it("pulls again once forgotten", async () => {
 		const { nuvio, pull } = nuvioByPlatform({});
 		const account = owner();
-		await pullShellSettings(nuvio, account, 1);
-		forgetShellSettings(account, 1);
-		await pullShellSettings(nuvio, account, 1);
+		await pullShellSettings(nuvio, cache, account, 1);
+		await forgetShellSettings(cache, account, 1);
+		await pullShellSettings(nuvio, cache, account, 1);
 		expect(pull).toHaveBeenCalledTimes(4);
 	});
 });

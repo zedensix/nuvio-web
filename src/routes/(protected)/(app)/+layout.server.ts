@@ -1,5 +1,6 @@
 import { redirect } from "@sveltejs/kit";
 import { LOCAL_DOWNLOADS } from "#lib/downloads/tokens.js";
+import { CACHE } from "#lib/services/index.js";
 import { pullShellSettings } from "#lib/settings/settings-data.js";
 import { resolve } from "$app/paths";
 import type { LayoutServerLoad } from "./$types";
@@ -32,6 +33,7 @@ export const load: LayoutServerLoad = async ({
 	// Never rejects : a failed pull falls back to defaults (and isn't cached).
 	const { ui, appAudio } = await pullShellSettings(
 		locals.nuvio.withFetch(fetch),
+		locals.services.get(CACHE),
 		locals.session.accountKey,
 		locals.profileId,
 	);

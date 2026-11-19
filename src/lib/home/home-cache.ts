@@ -4,8 +4,8 @@ import { browser } from "$app/env";
 
 /**
  * The last home feed this device showed, in `localStorage`, so the next visit
- * paints it right after hydration while the fresh rows stream in. Addon
- * payloads are never cached on the server; this copy stays on the device.
+ * paints it right after hydration while the fresh rows stream in, before the
+ * server has even started on them.
  *
  * Scoped per owner (`<userId>:<profileId>`, see `syncOwner`), and dropped on
  * sign-out with the rest of the device's data (`forgetLocalData`). All storage

@@ -72,6 +72,10 @@ reload.
 
 A manifest that loads is cached for thirty minutes. The set of addons for a
 profile is cached for a minute — or five seconds while any of them is failing.
+An addon's answers are cached too, unless its `Cache-Control` says `no-store` or
+`no-cache` (a `max-age` replaces the default, up to a day): catalogs for ten
+minutes, titles' details and subtitles for an hour, addon directories for six.
+Stream lists are always asked fresh.
 
 ## What the server does with an addon URL
 

@@ -133,7 +133,7 @@ export const playbackHandoff = new PlaybackHandoff();
 const LINK_CACHE_KEY = "nuvio:last-links";
 const MAX_ENTRIES = 60;
 
-interface CachedLink extends SelectedStream {
+export interface CachedLink extends SelectedStream {
 	resolvedAt: number;
 }
 
@@ -175,12 +175,22 @@ export function rememberLink(stream: SelectedStream): void {
 	writeCache(map);
 }
 
-/** The remembered stream for `videoId`, if it's newer than `maxAgeDays`. */
+/**
+ * The remembered stream for `videoId`, if it's newer than `maxAgeDays`: the
+ * newer of this browser's and `elsewhere` (what the server kept from another
+ * device).
+ */
 export function recallLink(
 	videoId: string,
 	maxAgeDays: number,
+	elsewhere: CachedLink | null = null,
 ): SelectedStream | null {
-	const entry = readCache()[videoId];
+	const local = readCache()[videoId];
+	const entry =
+		elsewhere?.videoId === videoId &&
+		elsewhere.resolvedAt > (local?.resolvedAt ?? 0)
+			? elsewhere
+			: local;
 	if (!entry?.url) {
 		return null;
 	}

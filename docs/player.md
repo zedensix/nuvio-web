@@ -26,7 +26,9 @@ next episode has one. Otherwise the usual auto-pick applies.
 **Reuse last link** (Settings → Playback) goes further and re-opens a title with
 the stream URL it used last time instead of resolving it again. Handy for debrid
 addons where re-resolution is slow. Remembered links are reused this way for
-`linkCacheDays` (3 by default, matching most debrid providers).
+`linkCacheDays` (3 by default, matching most debrid providers). The server keeps
+that link per profile too, so a title started on the phone re-opens on the TV
+with the same link.
 
 A torrent the addon's debrid service doesn't have yet can still be picked when
 the addon flags its link `behaviorHints.debridDownload` (Vortex marks those ⏬).

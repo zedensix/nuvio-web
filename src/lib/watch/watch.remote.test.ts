@@ -11,6 +11,7 @@ interface Client {
 }
 
 const state = {
+	cache: new MemoryCache(),
 	profileId: 1 as number,
 	titleMeta: vi.fn(),
 	client: {} as Client,
@@ -18,13 +19,18 @@ const state = {
 
 vi.mock("$app/server", () => ({
 	query: (schemaOrFn: unknown, fn?: unknown) => fn ?? schemaOrFn,
+	command: (schemaOrFn: unknown, fn?: unknown) => fn ?? schemaOrFn,
 	getRequestEvent: () => ({ locals: {}, fetch }),
 }));
 
 vi.mock("#lib/server/guards.js", () => ({
 	requireProfile: () => ({
-		event: { locals: {}, fetch },
+		event: {
+			locals: { services: { get: () => state.cache } },
+			fetch,
+		},
 		profileId: state.profileId,
+		accountKey: "account",
 	}),
 }));
 
@@ -33,7 +39,14 @@ vi.mock("#lib/addons/server.js", () => ({
 	titleMeta: (type: string, id: string) => state.titleMeta(type, id),
 }));
 
-import { getSubtitles, playbackMeta, resolveStreams } from "./watch.remote.ts";
+import { MemoryCache } from "#lib/services/cache.service.js";
+import { readLastLink } from "./last-links.ts";
+import {
+	getSubtitles,
+	playbackMeta,
+	rememberLastLink,
+	resolveStreams,
+} from "./watch.remote.ts";
 
 beforeEach(() => {
 	state.profileId = 1;
@@ -152,5 +165,30 @@ describe("playbackMeta", () => {
 		expect((await playbackMeta({ type: "movie", id: "tt404" })).heading).toBe(
 			"tt404",
 		);
+	});
+});
+
+describe("rememberLastLink", () => {
+	it("keeps the link for this account and profile", async () => {
+		const stream = {
+			videoId: "tt1",
+			url: "https://debrid.example/file.mkv",
+			externalUrl: null,
+			notWebReady: false,
+			label: "1080p",
+			addonName: "Torrentio",
+			infoHash: null,
+			audioRisky: false,
+			videoRisky: false,
+			videoCodec: null,
+		};
+		await rememberLastLink(stream);
+		expect(
+			await readLastLink(
+				state.cache,
+				{ accountKey: "account", profileId: state.profileId },
+				"tt1",
+			),
+		).toMatchObject({ url: stream.url });
 	});
 });

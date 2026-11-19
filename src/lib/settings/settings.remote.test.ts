@@ -1,11 +1,13 @@
 import * as v from "valibot";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryCache } from "#lib/services/cache.service.js";
 import { uiSettingsSchema } from "./ui-settings.ts";
 
 const state = {
 	settingsPull: vi.fn(),
 	settingsReplace: vi.fn(),
 	homeReplace: vi.fn(),
+	cache: new MemoryCache(),
 };
 
 vi.mock("$app/server", () => ({
@@ -15,7 +17,7 @@ vi.mock("$app/server", () => ({
 
 vi.mock("#lib/server/guards.js", () => ({
 	requireProfile: () => ({
-		event: { locals: {}, fetch },
+		event: { locals: { services: { get: () => state.cache } }, fetch },
 		nuvio: {
 			settings: { pull: state.settingsPull, replace: state.settingsReplace },
 			homeCatalog: {
@@ -57,7 +59,7 @@ describe("saveUiSettings", () => {
 	it("drops the cached shell settings once written", async () => {
 		const forget = vi.spyOn(data, "forgetShellSettings");
 		await saveUiSettings(defaults);
-		expect(forget).toHaveBeenCalledWith("u", 3);
+		expect(forget).toHaveBeenCalledWith(state.cache, "u", 3);
 	});
 
 	it("still writes when there's no prior blob", async () => {

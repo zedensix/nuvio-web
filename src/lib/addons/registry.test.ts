@@ -1,9 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import {
-	clearManifestCache,
-	parseAddonUrl,
-	validateManifest,
-} from "./manifest.ts";
+import { describe, expect, it } from "vitest";
+import { parseAddonUrl, validateManifest } from "./manifest.ts";
 import {
 	AddonRegistry,
 	buildRegistry,
@@ -238,8 +234,6 @@ describe("AddonRegistry catalogs", () => {
 });
 
 describe("buildRegistry", () => {
-	beforeEach(() => clearManifestCache());
-
 	// Public IP host so `safeFetch` skips DNS and the stub fetch is used.
 	function row(over: Partial<NuvioAddonRow>): NuvioAddonRow {
 		return {

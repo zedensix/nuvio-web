@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import type { NuvioClient } from "#lib/nuvio/index.js";
+import type { Cache } from "#lib/services/cache.service.js";
 import {
 	EMPTY_HOME_LAYOUT,
 	type HomeLayout,
@@ -65,15 +66,17 @@ export interface ShellSettings {
 
 const SHELL_TTL_MS = 5 * 60_000;
 
+/** Keyed by account too: a profile index alone is shared by every account. */
+function shellKey(accountKey: string, profileId: number): string {
+	return `shell:${accountKey}:${profileId}`;
+}
+
 /**
- * Process-wide, keyed `<accountKey>:<profileId>` (a profile index alone is
- * shared by every account). Holds the promise, so concurrent loads share one
- * pull and `forgetShellSettings` can't be undone by a pull already in flight.
+ * Bumped by `forgetShellSettings`, so a pull that started before a save can't
+ * put the old blob back once it lands. One process owns the writes, so this
+ * can stay in memory even when the cache is Redis.
  */
-const shellCache = new Map<
-	string,
-	{ at: number; settings: Promise<ShellSettings> }
->();
+const generations = new Map<string, number>();
 
 /**
  * The layout's two settings pulls, cached for a few minutes: they gate every
@@ -81,49 +84,47 @@ const shellCache = new Map<
  * is kept, so a Nuvio hiccup doesn't pin the defaults. A change made in the
  * mobile app shows up once the entry expires; one made here clears it.
  */
-export function pullShellSettings(
+export async function pullShellSettings(
 	nuvio: NuvioClient,
+	cache: Cache,
 	accountKey: string,
 	profileId: number,
 ): Promise<ShellSettings> {
-	const now = Date.now();
-	for (const [key, entry] of shellCache) {
-		if (now - entry.at >= SHELL_TTL_MS) {
-			shellCache.delete(key);
-		}
-	}
-	const key = `${accountKey}:${profileId}`;
-	const hit = shellCache.get(key);
+	const key = shellKey(accountKey, profileId);
+	const hit = await cache.get<ShellSettings>(key);
 	if (hit) {
-		return hit.settings;
+		return hit;
 	}
-	const settings = Promise.allSettled([
+	const generation = generations.get(key) ?? 0;
+	const [web, mobile] = await Promise.allSettled([
 		pullBlob(nuvio, profileId, PLATFORM),
 		pullBlob(nuvio, profileId, MOBILE_PLATFORM),
-	]).then(([web, mobile]) => {
-		if (
-			(web.status === "rejected" || mobile.status === "rejected") &&
-			shellCache.get(key)?.settings === settings
-		) {
-			shellCache.delete(key);
-		}
-		return {
-			ui: uiSettings(web.status === "fulfilled" ? web.value : {}),
-			appAudio: appAudioLanguage(
-				mobile.status === "fulfilled" ? mobile.value : {},
-			),
-		};
-	});
-	shellCache.set(key, { at: now, settings });
+	]);
+	const settings = {
+		ui: uiSettings(web.status === "fulfilled" ? web.value : {}),
+		appAudio: appAudioLanguage(
+			mobile.status === "fulfilled" ? mobile.value : {},
+		),
+	};
+	if (
+		web.status === "fulfilled" &&
+		mobile.status === "fulfilled" &&
+		(generations.get(key) ?? 0) === generation
+	) {
+		await cache.set(key, settings, SHELL_TTL_MS);
+	}
 	return settings;
 }
 
 /** Drops a profile's cached shell settings : after this app writes them. */
-export function forgetShellSettings(
+export async function forgetShellSettings(
+	cache: Cache,
 	accountKey: string,
 	profileId: number,
-): void {
-	shellCache.delete(`${accountKey}:${profileId}`);
+): Promise<void> {
+	const key = shellKey(accountKey, profileId);
+	generations.set(key, (generations.get(key) ?? 0) + 1);
+	await cache.delete(key);
 }
 
 /** This profile's home layout for the web client, or the empty one on any failure. */

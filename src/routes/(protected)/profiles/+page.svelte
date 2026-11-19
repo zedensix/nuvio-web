@@ -16,7 +16,7 @@
 	import { m } from "#lib/i18n/index.js";
 	import type { ProfileView } from "#lib/nuvio/profile.js";
 	import { cn } from "#lib/utils.js";
-	import { page } from "$app/state";
+	import { navigating, page } from "$app/state";
 	import { signOut } from "../../auth/auth.remote.ts";
 	import {
 		createProfile,
@@ -71,6 +71,10 @@
 
 	const canAdd = $derived((data.profiles?.length ?? 0) < 6);
 	const nameIssue = $derived(createProfile.fields.name.issues()?.[0]?.message);
+
+	// The tile just picked: it shows a spinner while the pick and the page it
+	// lands on load, and drops it if either ends without leaving (PIN, error).
+	let picking = $state<number | null>(null);
 
 	// Manage mode: tiles open an editor instead of selecting the profile.
 	let manage = $state(false);
@@ -174,6 +178,9 @@
 				</button>
 			{:else}
 				{@const pick = selectProfile.for(profile.profile_index)}
+				{@const loading =
+					picking === profile.profile_index &&
+					(pick.pending > 0 || navigating.to !== null)}
 				<form {...pick} class="contents">
 					<input
 						{...pick.fields.profileId.as("hidden", String(profile.profile_index))}
@@ -183,15 +190,26 @@
 					<button
 						type="submit"
 						disabled={pick.pending > 0}
+						aria-busy={loading}
+						onclick={() => (picking = profile.profile_index)}
 						class={cn(
 							"group flex w-full max-w-36 flex-col sm:w-28 items-center gap-3 rounded-2xl p-2 outline-none",
-							"focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+							"focus-visible:ring-2 focus-visible:ring-ring",
+							!loading && "disabled:opacity-50",
 						)}
 					>
 						<div
-							class="size-32 sm:size-24 overflow-hidden rounded-2xl ring-1 ring-white/10 ring-offset-2 ring-offset-background transition-all duration-200 group-active:scale-95 group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary group-focus-visible:ring-2 group-focus-visible:ring-ring"
+							class="relative size-32 sm:size-24 overflow-hidden rounded-2xl ring-1 ring-white/10 ring-offset-2 ring-offset-background transition-all duration-200 group-active:scale-95 group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary group-focus-visible:ring-2 group-focus-visible:ring-ring"
 						>
 							<ProfileAvatar {profile} />
+							{#if loading}
+								<!-- Held back a beat so a fast pick doesn't flash it. -->
+								<span
+									class="pick-loading absolute inset-0 flex items-center justify-center bg-black/50 text-white"
+								>
+									<Spinner class="size-7" />
+								</span>
+							{/if}
 						</div>
 						<span class="max-w-full truncate text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
 							{profile.name}
@@ -494,3 +512,15 @@
 		{/if}
 	</Dialog.Content>
 </Dialog.Root>
+
+<style>
+	.pick-loading {
+		animation: pick-loading-in 200ms 300ms both;
+	}
+
+	@keyframes pick-loading-in {
+		from {
+			opacity: 0;
+		}
+	}
+</style>

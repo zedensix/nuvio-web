@@ -1,4 +1,5 @@
 import { pooledMap } from "#lib/core/pool.js";
+import type { Cache } from "#lib/services/cache.service.js";
 import { fetchManifest } from "./manifest.ts";
 import type { AddonManifest, AddonResourceName, CatalogDef } from "./types.ts";
 
@@ -234,6 +235,7 @@ const MANIFEST_CONCURRENCY = 6;
 export async function buildRegistry(
 	rows: NuvioAddonRow[],
 	fetchImpl: typeof fetch,
+	cache?: Cache,
 ): Promise<{ registry: AddonRegistry; errors: AddonLoadError[] }> {
 	const enabled = rows
 		.filter((row) => row.enabled)
@@ -245,7 +247,9 @@ export async function buildRegistry(
 		MANIFEST_CONCURRENCY,
 		async (row): Promise<InstalledAddon | null> => {
 			try {
-				const { manifest, baseUrl } = await fetchManifest(row.url, fetchImpl);
+				const { manifest, baseUrl } = await fetchManifest(row.url, fetchImpl, {
+					cache,
+				});
 				return {
 					url: row.url,
 					name: row.name,

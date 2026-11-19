@@ -9,7 +9,13 @@ services:
       # no admin surface at all.
       NUVIO_ADMIN_EMAILS: ${NUVIO_ADMIN_EMAILS:-}
       NUVIO_LOG_LEVEL: debug
+      # Optional: keeps the server's caches (addon answers, settings, last
+      # played links) across restarts. Drop it and the redis service to keep
+      # them in memory.
+      NUVIO_REDIS_URL: redis://redis:6379
       PORT: 8080
+    depends_on:
+      - redis
     volumes:
       # Sign-in metrics and the instance lock live here. Without this the
       # container starts clean on every recreate.
@@ -20,3 +26,18 @@ services:
       start_period: 5s
       test: ["CMD", "curl", "-fsS", "http://localhost:3000/api/health"]
       timeout: 30s
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    # A cache, not a store: capped, evicting, nothing written to disk.
+    command:
+      - redis-server
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+      - --appendonly
+      - "no"

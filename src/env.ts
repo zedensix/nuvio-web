@@ -71,6 +71,11 @@ export const variables = defineEnvVars({
 			"A folder this server downloads titles into for offline viewing, played back from there (the desktop app sets it to the system's videos folder). Unset means downloads stay in each browser's own storage.",
 		schema: (value: string | undefined) => value?.trim() ?? "",
 	},
+	NUVIO_REDIS_URL: {
+		description:
+			"A Redis server (redis://[user:password@]host:port[/db], rediss:// for TLS) the server keeps its caches in, so they outlive a restart. Unset means they live in memory.",
+		schema: (value: string | undefined) => value?.trim() ?? "",
+	},
 	NUVIO_SENTRY_DSN: {
 		description:
 			"Sentry DSN the browser reports uncaught client errors to (any Sentry-compatible ingest, e.g. Homerun's). Unset means client errors are only logged to the console.",

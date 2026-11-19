@@ -11,14 +11,14 @@ vi.mock("#lib/settings/settings-data.js", () => ({
 }));
 
 import { LOCAL_DOWNLOADS } from "#lib/downloads/tokens.js";
-import { Container } from "#lib/services/index.js";
+import { MemoryCache } from "#lib/services/cache.service.js";
+import { CACHE, Container } from "#lib/services/index.js";
 import { load } from "./+layout.server.ts";
 
 function call(profileId: number | null, pinEnabled = false, onDisk = false) {
-	const services = new Container("test").provide(
-		LOCAL_DOWNLOADS,
-		onDisk ? ({} as never) : null,
-	);
+	const services = new Container("test")
+		.provide(LOCAL_DOWNLOADS, onDisk ? ({} as never) : null)
+		.provide(CACHE, new MemoryCache());
 	return load({
 		locals: {
 			session: { accountKey: "u" },

@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-	clearManifestCache,
-	fetchManifest,
-	validateManifest,
-} from "./manifest.ts";
+import { MemoryCache } from "#lib/services/cache.service.js";
+import { fetchManifest, validateManifest } from "./manifest.ts";
 
 // `parseAddonUrl` / the basic `validateManifest` rejections are covered in
 // `registry.test.ts` alongside `buildRegistry`; this file takes the shape
@@ -212,31 +209,36 @@ describe("fetchManifest", () => {
 		catalogs: [{ type: "movie", id: "top" }],
 	};
 
-	beforeEach(() => clearManifestCache());
+	let cache = new MemoryCache();
+	beforeEach(() => {
+		cache = new MemoryCache();
+	});
 
 	it("fetches, validates and caches by base URL", async () => {
 		const impl = vi.fn(
 			async () => new Response(JSON.stringify(body), { status: 200 }),
 		) as unknown as typeof fetch;
 
-		const first = await fetchManifest(url, impl);
+		const first = await fetchManifest(url, impl, { cache });
 		expect(first).toEqual({
 			manifest: expect.objectContaining({ id: "org.one" }),
 			baseUrl: "https://93.184.216.34",
 		});
 
-		await fetchManifest(url, impl);
+		await fetchManifest(url, impl, { cache });
 		expect(impl).toHaveBeenCalledTimes(1);
 	});
 
-	it("re-fetches when forced", async () => {
+	it("re-fetches when forced, and without a cache", async () => {
 		const impl = vi.fn(
 			async () => new Response(JSON.stringify(body), { status: 200 }),
 		) as unknown as typeof fetch;
 
+		await fetchManifest(url, impl, { cache });
+		await fetchManifest(url, impl, { cache, force: true });
 		await fetchManifest(url, impl);
-		await fetchManifest(url, impl, { force: true });
-		expect(impl).toHaveBeenCalledTimes(2);
+		await fetchManifest(url, impl);
+		expect(impl).toHaveBeenCalledTimes(4);
 	});
 
 	it("reports the status when the manifest request fails", async () => {

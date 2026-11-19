@@ -65,7 +65,12 @@ sequenceDiagram
   dropped connection; a queue sends the writes to the server.
 - **Browser cache.** Addon metadata (a title's page, Discover, the drawer's
   header) is cached by the browser for 15 minutes, privately and per session.
-  Nothing is cached on the server.
+  The home feed is kept on the device and painted on the next visit while the
+  fresh rows stream in.
+- **Server cache.** Addon answers other than stream lists, the layout's settings
+  and the last-played links are cached in memory, or in Redis with
+  `NUVIO_REDIS_URL` so they survive a redeploy. See
+  [Configuration](configuration#cache).
 - **Offline.** A service worker keeps the app's own files and an offline page.
   It never caches signed-in pages.
 

@@ -1,11 +1,39 @@
 import { pooledMap } from "#lib/core/pool.js";
 import { readJsonCapped, safeFetch } from "#lib/server/safe-fetch.js";
+import type { Cache } from "#lib/services/cache.service.js";
 import type { Logger } from "#lib/services/index.js";
+import { addonCacheKey } from "./cache-key.ts";
 
 // Cap on simultaneous upstream addon requests during a fan-out : keeps a
 // many-addon profile from bursting well past a sane per-user request rate.
 const FANOUT_CONCURRENCY = 6;
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
+
+/**
+ * How long an addon answer is reused when the addon doesn't say (a
+ * `Cache-Control: max-age` wins, capped at a day). Catalogs move the fastest:
+ * a trending row, a Trakt watchlist. Streams are never kept: their links are
+ * per user and expire.
+ */
+const CACHE_TTL_MS: Partial<Record<AddonResourceName, number>> = {
+	catalog: 10 * 60_000,
+	meta: 60 * 60_000,
+	subtitles: 60 * 60_000,
+	addon_catalog: 6 * 60 * 60_000,
+};
+const MAX_CACHE_TTL_MS = 24 * 60 * 60_000;
+
+/** How long `response` may be reused, or 0 when it says not to. */
+function cacheTtl(response: Response, fallbackMs: number): number {
+	const header = response.headers.get("cache-control")?.toLowerCase() ?? "";
+	if (/no-store|no-cache/.test(header)) {
+		return 0;
+	}
+	const maxAge = /max-age=(\d+)/.exec(header)?.[1];
+	return maxAge === undefined
+		? fallbackMs
+		: Math.min(Number(maxAge) * 1000, MAX_CACHE_TTL_MS);
+}
 
 import {
 	type AddonRegistry,
@@ -283,13 +311,27 @@ function contradicts(meta: Meta, requestedId: string): boolean {
 	return keys.length > 0 && !keys.includes(wanted);
 }
 
+export interface AddonClientOptions {
+	timeoutMs?: number;
+	logger?: Pick<Logger, "warn">;
+	/** Where addon answers are kept between requests; none, nothing is. */
+	cache?: Cache;
+}
+
 export class AddonClient {
+	private readonly timeoutMs: number;
+	private readonly logger?: Pick<Logger, "warn">;
+	private readonly cache?: Cache;
+
 	constructor(
 		private readonly registry: AddonRegistry,
 		private readonly fetchImpl: typeof fetch,
-		private readonly timeoutMs = 15_000,
-		private readonly logger?: Pick<Logger, "warn">,
-	) {}
+		{ timeoutMs = 15_000, logger, cache }: AddonClientOptions = {},
+	) {
+		this.timeoutMs = timeoutMs;
+		this.logger = logger;
+		this.cache = cache;
+	}
 
 	async getCatalog(
 		query: CatalogQuery,
@@ -478,15 +520,25 @@ export class AddonClient {
 	}
 
 	/**
-	 * Addon responses are **never cached server-side** : catalog / meta / stream
-	 * payloads point at third-party content and the server must not retain them.
-	 * The browser's HTTP cache still honours whatever the addon sends.
+	 * Every answer but a stream list is kept in the cache, keyed by its URL.
+	 * Stream lists carry per-user links that expire, so they always go to the
+	 * addon (and only they can ask for `fresh`).
 	 */
 	private async request(
 		addon: InstalledAddon,
 		ref: ResourceRef,
 	): Promise<unknown> {
 		const url = new URL(buildResourceUrl(addon.baseUrl, ref));
+		const ttl =
+			ref.resource === "stream" ? undefined : CACHE_TTL_MS[ref.resource];
+		const cache = ttl === undefined ? undefined : this.cache;
+		const key = addonCacheKey(ref.resource, url.href);
+		if (cache) {
+			const cached = await cache.get(key);
+			if (cached !== undefined) {
+				return cached;
+			}
+		}
 		const headers: Record<string, string> = { accept: "application/json" };
 		// No addon protocol for it: the no-cache headers reach an addon or proxy
 		// that honours them, the unique query string misses a CDN's cached copy.
@@ -507,6 +559,11 @@ export class AddonClient {
 		if (!response.ok) {
 			throw new Error(`${ref.resource} request failed with ${response.status}`);
 		}
-		return readJsonCapped(response, MAX_RESPONSE_BYTES);
+		const data = await readJsonCapped(response, MAX_RESPONSE_BYTES);
+		const keepFor = cache ? cacheTtl(response, ttl ?? 0) : 0;
+		if (cache && keepFor > 0) {
+			await cache.set(key, data, keepFor);
+		}
+		return data;
 	}
 }

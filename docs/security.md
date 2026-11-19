@@ -144,12 +144,15 @@ believes a backend about its own users.
   instance refuses every custom backend at sign-in and signs its sessions out.
 - **Identity is namespaced.** Everything this server keys by user (library,
   progress and history in SQLite, the sync cursors, the stored sessions, the
-  live event streams, the addon registry cache, the browser's IndexedDB owner
-  key) uses an account key: the bare user id on the official API, so existing
-  data keeps its key, and `custom-` plus a SHA-256 of the backend URL and the
-  user id on any other. The same user id on two backends is two accounts that
-  can never read each other's data. The sign-in rate limit per email is also per
-  backend.
+  live event streams, the addon registry cache, the last-played links, the
+  browser's IndexedDB owner key) uses an account key: the bare user id on the
+  official API, so existing data keeps its key, and `custom-` plus a SHA-256 of
+  the backend URL and the user id on any other. The same user id on two backends
+  is two accounts that can never read each other's data. The sign-in rate limit
+  per email is also per backend.
+- **Cached addon answers are keyed by their URL**, hashed, so the configuration
+  an addon URL often carries (a debrid key) never shows up in a cache key. Two
+  users share a cached answer only when they installed the exact same URL.
 - **The session pins its backend.** The URL and key are stored with the session,
   encrypted like the tokens. Every client built for that session (page loads,
   token refresh, the background sync, avatars) talks to that backend and nothing

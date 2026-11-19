@@ -1,7 +1,6 @@
 export { TtlCache } from "./cache.ts";
 export { AddonClient, type StreamWithSource } from "./client.ts";
 export {
-	clearManifestCache,
 	type FetchedManifest,
 	fetchManifest,
 	type ParsedAddonUrl,

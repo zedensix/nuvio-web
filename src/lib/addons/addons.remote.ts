@@ -4,7 +4,7 @@ import { addonUrl } from "#lib/forms/schemas.js";
 import { m } from "#lib/i18n/index.js";
 import type { AddonInput } from "#lib/nuvio/index.js";
 import { pinnedFetch } from "#lib/server/safe-fetch.js";
-import { LOGGER } from "#lib/services/index.js";
+import { CACHE, LOGGER } from "#lib/services/index.js";
 import { command, query } from "$app/server";
 import { fetchManifest } from "./manifest.ts";
 import {
@@ -94,6 +94,7 @@ export const previewAddon = command(addonUrl, async (url) => {
 	try {
 		const { manifest, baseUrl } = await fetchManifest(url, pinnedFetch, {
 			force: true,
+			cache: event.locals.services.get(CACHE),
 		});
 		return {
 			ok: true as const,

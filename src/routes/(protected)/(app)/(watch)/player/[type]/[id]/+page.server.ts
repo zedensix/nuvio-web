@@ -1,6 +1,8 @@
 import { getAddonClient, titleMeta } from "#lib/addons/server.js";
 import { pullMediaSegments } from "#lib/player/segments-data.js";
+import { CACHE } from "#lib/services/index.js";
 import { profileData } from "#lib/userdata/server.js";
+import { readLastLink } from "#lib/watch/last-links.js";
 import { parseVideoId } from "#lib/watch/playback-context.js";
 import {
 	pullPlaybackMeta,
@@ -28,7 +30,18 @@ export const load: PageServerLoad = ({
 		async (type, id) => (await titleMeta(type, id))?.meta ?? null,
 	).catch(() => null);
 	const client = getAddonClient().then((addons) => addons.client);
+	const accountKey = locals.session?.accountKey;
 	return {
+		// What played this video last on any of this profile's devices, for
+		// "reuse last link". A cache read : it lands long before the streams.
+		lastLink:
+			accountKey && locals.profileId != null
+				? readLastLink(
+						locals.services.get(CACHE),
+						{ accountKey, profileId: locals.profileId },
+						video.id,
+					).catch(() => null)
+				: Promise.resolve(null),
 		context,
 		resume: pullPlaybackResume(profileData(locals, fetch), video).catch(
 			() => null,

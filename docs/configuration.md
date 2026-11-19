@@ -139,6 +139,24 @@ value shorter than 32 characters **fails at boot**. Changing or losing the key
 signs every user out (the stored tokens can no longer be decrypted); nothing
 else is lost.
 
+## Cache
+
+| Variable          | Default | Values                                                        |
+| ----------------- | ------- | ------------------------------------------------------------- |
+| `NUVIO_REDIS_URL` | unset   | `redis://[user:password@]host:port[/db]`, `rediss://` for TLS |
+
+The server caches addon answers (manifests, catalogs, titles' details,
+subtitles, addon directories), each profile's layout settings, and the stream
+that last played each video (for **Reuse last link**, on every device). Unset,
+that cache lives in memory and a restart or redeploy empties it; the first page
+after one asks every addon again. Set, it lives in Redis and survives both.
+
+Redis is never the source of truth: while it is unreachable the server logs one
+warning a minute and asks the addons directly. Give it a memory cap and an
+eviction policy (`--maxmemory 256mb --maxmemory-policy allkeys-lru`); it needs
+no persistence. Stream lists are never cached: their links are per user and
+expire.
+
 ## Logging
 
 | Variable           | Default                              | Values                        |

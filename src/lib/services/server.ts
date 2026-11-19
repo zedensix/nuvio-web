@@ -12,6 +12,7 @@ import {
 	NUVIO_DOWNLOADS_DIR,
 	NUVIO_LOG_FORMAT,
 	NUVIO_LOG_LEVEL,
+	NUVIO_REDIS_URL,
 	NUVIO_SESSION_SECRET,
 } from "$app/env/private";
 import { resolve } from "$app/paths";
@@ -21,6 +22,7 @@ import {
 	ADMIN_NOTIFICATIONS,
 	AdminNotifierService,
 } from "./admin-notifier.service.ts";
+import { MemoryCache, RedisCache } from "./cache.service.ts";
 import { Container } from "./container.ts";
 import { DatabaseService } from "./database.service.ts";
 import { consoleSink, Logger } from "./logger.service.ts";
@@ -32,6 +34,7 @@ import { SESSION_STORE, SessionStore } from "./session-store.service.ts";
 import {
 	ADMIN,
 	ADMIN_NOTIFIER,
+	CACHE,
 	COOKIES,
 	DATABASE,
 	LOGGER,
@@ -63,6 +66,11 @@ serverServices
 	)
 	.register(DATABASE, (c) => new DatabaseService(NUVIO_DATA_DIR, c.get(LOGGER)))
 	.register(ADMIN, () => new AdminService(NUVIO_ADMIN_EMAILS ?? ""))
+	.register(CACHE, (c) =>
+		NUVIO_REDIS_URL
+			? new RedisCache(NUVIO_REDIS_URL, c.get(LOGGER).scoped("Cache"))
+			: new MemoryCache(),
+	)
 	.register(RATE_LIMITER, () => new RateLimiter())
 	// A singleton so the file is read (or created) once, on the first request.
 	.register(SESSION_SECRET, () =>

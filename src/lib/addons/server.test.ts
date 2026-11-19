@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryCache } from "#lib/services/cache.service.js";
+import { CACHE } from "#lib/services/tokens.js";
 import type { AddonManifest } from "./types.ts";
 
 const state = {
@@ -20,13 +22,18 @@ const state = {
 	}>,
 };
 
+let addonCache = new MemoryCache();
+
 const event = {
 	// Forwards the visitor's cookies: the addon layer must never be handed it.
 	fetch: (async () => {
 		throw new Error("event.fetch reached the addon layer");
 	}) as unknown as typeof fetch,
 	locals: {
-		services: { get: () => ({ warn: () => {} }) },
+		services: {
+			get: (token: unknown) =>
+				token === CACHE ? addonCache : { warn: () => {} },
+		},
 		nuvio: {
 			addons: { list: (id: number) => state.list(id) },
 			profiles: { list: async () => state.profiles },
@@ -126,6 +133,7 @@ function row(url = "https://one.example/manifest.json") {
 }
 
 beforeEach(() => {
+	addonCache = new MemoryCache();
 	vi.useFakeTimers();
 	vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
 	state.userId = crypto.randomUUID();

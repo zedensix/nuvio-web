@@ -2,6 +2,7 @@ import type { Cookies, RequestEvent } from "@sveltejs/kit";
 import type { AdminNotifier, MailSender } from "#lib/notifications/types.js";
 import type { NuvioBackend } from "#lib/nuvio/backend.js";
 import type { AdminService } from "./admin.service.ts";
+import type { Cache } from "./cache.service.ts";
 import { serviceToken } from "./container.ts";
 import type { DatabaseService } from "./database.service.ts";
 import type { Logger } from "./logger.service.ts";
@@ -18,6 +19,8 @@ import type { SessionService } from "./session.service.ts";
 export const LOGGER = serviceToken<Logger>("Logger");
 export const DATABASE = serviceToken<DatabaseService>("DatabaseService");
 export const ADMIN = serviceToken<AdminService>("AdminService");
+/** Memory, or Redis with `NUVIO_REDIS_URL`: addon responses, settings, links. */
+export const CACHE = serviceToken<Cache>("Cache");
 /** The key `SessionService` signs the session cookie with. */
 export const SESSION_SECRET = serviceToken<string>("SessionSecret");
 

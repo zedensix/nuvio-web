@@ -15,9 +15,14 @@ Object.assign(globalThis, {
 	},
 });
 
-const { playbackHandoff, recallPick, rememberPick, streamKey } = await import(
-	"./playback.svelte.ts"
-);
+const {
+	playbackHandoff,
+	recallLink,
+	recallPick,
+	rememberLink,
+	rememberPick,
+	streamKey,
+} = await import("./playback.svelte.ts");
 
 describe("playbackHandoff.take", () => {
 	it("recovers a pick from sessionStorage without writing its own state", () => {
@@ -67,6 +72,28 @@ describe("picked streams", () => {
 		expect(recallPick("tt1", "nope", 3)).toBeNull();
 		expect(recallPick("tt1", null, 3)).toBeNull();
 		expect(recallPick("tt1", key, -1)).toBeNull();
+	});
+
+	it("reuses the newer of this browser's last link and another device's", () => {
+		store.clear();
+		expect(recallLink("tt1", 3)).toBeNull();
+		rememberLink(stream);
+		expect(recallLink("tt1", 3)?.url).toBe(stream.url);
+
+		const elsewhere = {
+			...stream,
+			url: "https://debrid.example/other.mkv",
+			resolvedAt: Date.now() + 1000,
+		};
+		expect(recallLink("tt1", 3, elsewhere)?.url).toBe(elsewhere.url);
+		// Older than this browser's, or for another video: this browser's wins.
+		expect(recallLink("tt1", 3, { ...elsewhere, resolvedAt: 1 })?.url).toBe(
+			stream.url,
+		);
+		expect(recallLink("tt1", 3, { ...elsewhere, videoId: "tt2" })?.url).toBe(
+			stream.url,
+		);
+		expect(recallLink("tt1", -1, elsewhere)).toBeNull();
 	});
 });
 
