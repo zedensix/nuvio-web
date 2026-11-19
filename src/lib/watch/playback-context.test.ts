@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Meta, MetaVideo } from "#lib/addons/index.js";
+import type { HistoryRecord } from "#lib/sync/types.js";
 import {
 	assemblePlaybackContext,
 	heroFields,
@@ -12,6 +13,7 @@ import {
 	resumeRowFor,
 	resumeTarget,
 	titleProgressFor,
+	watchedVideoIds,
 } from "./playback-context.ts";
 
 function video(over: Partial<MetaVideo>): MetaVideo {
@@ -523,5 +525,158 @@ describe("resumeTarget", () => {
 			],
 		);
 		expect(Object.keys(map).sort()).toEqual(["dup", "e1"]);
+	});
+});
+
+describe("watchedVideoIds", () => {
+	const progressRow = (over: {
+		contentId?: string;
+		videoId: string;
+		season?: number | null;
+		episode?: number | null;
+		position?: number;
+		duration?: number;
+	}) => ({
+		contentId: "tt0411008",
+		season: 1,
+		episode: 1,
+		position: 100_000,
+		duration: 100_000,
+		...over,
+	});
+
+	const historyRow = (over: {
+		contentId?: string;
+		season: number | null;
+		episode: number | null;
+	}) => ({ contentId: "tt0411008", ...over }) as HistoryRecord;
+
+	const progressMap = (rows: ReturnType<typeof progressRow>[]) =>
+		titleProgressFor(rows, "series", "tt0411008", seriesVideos);
+
+	const seriesVideos = seriesMeta.videos ?? [];
+	const base = { type: "series", id: "tt0411008", videos: seriesVideos };
+
+	it("marks an imported history record watched without any progress", () => {
+		const set = watchedVideoIds({
+			progress: {},
+			history: [historyRow({ season: 1, episode: 1 })],
+			...base,
+		});
+		expect(set.has("tt0411008:1:1")).toBe(true);
+	});
+
+	it("marks a completed progress row watched without history", () => {
+		const set = watchedVideoIds({
+			progress: progressMap([
+				progressRow({ videoId: "tt0411008:1:1", position: 100_000 }),
+			]),
+			history: [],
+			...base,
+		});
+		expect(set.has("tt0411008:1:1")).toBe(true);
+	});
+
+	it("does not mark an incomplete progress row watched", () => {
+		const set = watchedVideoIds({
+			progress: progressMap([
+				progressRow({ videoId: "tt0411008:1:1", position: 40_000 }),
+			]),
+			history: [],
+			...base,
+		});
+		expect(set.has("tt0411008:1:1")).toBe(false);
+	});
+
+	it("treats history plus incomplete progress as watched while keeping the resume fraction", () => {
+		const map = progressMap([
+			progressRow({ videoId: "tt0411008:1:1", position: 40_000 }),
+		]);
+		const set = watchedVideoIds({
+			progress: map,
+			history: [historyRow({ season: 1, episode: 1 })],
+			...base,
+		});
+		expect(set.has("tt0411008:1:1")).toBe(true);
+		expect(map["tt0411008:1:1"].fraction).toBe(0.4);
+	});
+
+	it("does not match a different season or episode", () => {
+		const set = watchedVideoIds({
+			progress: {},
+			history: [historyRow({ season: 1, episode: 1 })],
+			...base,
+		});
+		expect(set.has("tt0411008:1:2")).toBe(false);
+		expect(set.has("tt0411008:2:1")).toBe(false);
+	});
+
+	it("does not match another title's id (no IMDb/TMDB false positive)", () => {
+		const set = watchedVideoIds({
+			progress: {},
+			history: [
+				historyRow({
+					contentId: "tt0903747",
+					season: 1,
+					episode: 1,
+				}),
+			],
+			...base,
+		});
+		expect(set.has("tt0411008:1:1")).toBe(false);
+	});
+
+	it("does not match a differently namespaced id for the same season/episode", () => {
+		const set = watchedVideoIds({
+			progress: {},
+			history: [historyRow({ season: 1, episode: 1 })],
+			type: "series",
+			id: "tmdb:1396",
+			videos: [video({ id: "tmdb:1396:1:1", season: 1, episode: 1 })],
+		});
+		expect(set.has("tmdb:1396:1:1")).toBe(false);
+	});
+
+	it("matches a movie by content id alone", () => {
+		const set = watchedVideoIds({
+			progress: {},
+			history: [
+				{
+					contentId: "tt0137523",
+					season: null,
+					episode: null,
+				} as HistoryRecord,
+			],
+			type: "movie",
+			id: "tt0137523",
+			videos: [],
+		});
+		expect(set.has("tt0137523")).toBe(true);
+	});
+
+	it("does not match a movie history for a different movie", () => {
+		const set = watchedVideoIds({
+			progress: {},
+			history: [
+				{
+					contentId: "tt9999999",
+					season: null,
+					episode: null,
+				} as HistoryRecord,
+			],
+			type: "movie",
+			id: "tt0137523",
+			videos: [],
+		});
+		expect(set.has("tt0137523")).toBe(false);
+	});
+
+	it("is empty when a history record is deleted (tombstone)", () => {
+		const set = watchedVideoIds({
+			progress: {},
+			history: [],
+			...base,
+		});
+		expect(set.has("tt0411008:1:1")).toBe(false);
 	});
 });

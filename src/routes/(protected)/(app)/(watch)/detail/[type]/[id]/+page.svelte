@@ -45,6 +45,7 @@
 		playOrder,
 		resumeTarget,
 		titleProgressFor,
+		watchedVideoIds,
 	} from "#lib/watch/playback-context.js";
 	import { parseRuntimeMs } from "#lib/watch/runtime.js";
 	import { sourcesPanel } from "#lib/watch/sources-panel.svelte.js";
@@ -94,6 +95,22 @@
 			? titleProgressFor(sync.progress, type, id, meta?.videos)
 			: progressStream.current,
 	);
+
+	// Watched = completed progress OR an imported history record covering the
+	// episode. History alone marks watched with no resume position, so resume
+	// bars and the "continue" CTA stay driven by progress only.
+	const watchedIds = $derived.by(() => {
+		if (!meta) {
+			return new Set<string>();
+		}
+		return watchedVideoIds({
+			progress,
+			history: sync.history,
+			type,
+			id: parseVideoId(type, id).contentId,
+			videos: meta.videos ?? [],
+		});
+	});
 
 	// A non-reactive-in-template mirror of `meta`: only ever set to a real object,
 	// cleared only when the query has no result. A `forkPreloads` speculative
@@ -154,7 +171,7 @@
 	const firstEpisode = $derived(orderedEpisodes[0] ?? null);
 
 	const watchedEpisodes = $derived(
-		orderedEpisodes.filter((episode) => progress[episode.id]?.completed).length,
+		orderedEpisodes.filter((episode) => watchedIds.has(episode.id)).length,
 	);
 	const seriesFlag = $derived.by(() => {
 		if (contentType !== "series" || orderedEpisodes.length === 0) {
@@ -304,14 +321,24 @@
 		episode: number | null,
 		watched: boolean,
 	) {
+		const contentId = parseVideoId(type, videoId).contentId;
 		if (watched) {
-			// The row may sit under the URL id (marked here) or the id parsed from
-			// the episode id (saved by the player) : clear both.
-			for (const contentId of new Set([
-				id,
-				parseVideoId(type, videoId).contentId,
-			])) {
-				sync.clearProgress({ contentId, season, episode });
+			// Clear progress under both id spellings (the row may sit under the
+			// URL id marked here or the id parsed from the episode id saved by
+			// the player), and remove any imported history so "unwatched" sticks
+			// even when an older history record exists.
+			for (const c of new Set([id, contentId])) {
+				sync.clearProgress({ contentId: c, season, episode });
+			}
+			if (
+				sync.history.some(
+					(entry) =>
+						entry.contentId === contentId &&
+						entry.season === season &&
+						entry.episode === episode,
+				)
+			) {
+				sync.deleteHistory({ contentId, season, episode });
 			}
 		} else {
 			sync.markWatched({
@@ -327,7 +354,7 @@
 
 	/** Marks the unwatched ones in one sync write; returns how many that was. */
 	function markEpisodes(videos: typeof orderedEpisodes): number {
-		const unwatched = videos.filter((v) => !progress[v.id]?.completed);
+		const unwatched = videos.filter((v) => !watchedIds.has(v.id));
 		sync.markManyWatched(
 			unwatched.map((video) => ({
 				contentId: id,
@@ -460,7 +487,7 @@
             network={providers.network}
             notice={nextToAirNotice}
             flag={contentType === "movie"
-                ? progress[id]?.completed
+                ? watchedIds.has(id)
                     ? m.watch_flag_watched()
                     : null
                 : seriesFlag}
@@ -587,10 +614,10 @@
                                 id,
                                 null,
                                 null,
-                                Boolean(progress[id]?.completed),
+                                watchedIds.has(id),
                             )}
                     >
-                        {#if progress[id]?.completed}
+                        {#if watchedIds.has(id)}
                             <EyeOffIcon
                                 class="hidden group-hover:block"
                                 data-icon="inline-start"
@@ -665,6 +692,7 @@
                     videos={details.videos ?? []}
                     seriesRuntime={details.runtime ?? null}
                     {progress}
+                    watched={watchedIds}
                     initialSeason={resumeEpisode
                         ? (details.videos?.find((v) => v.id === resumeEpisode.id)
                               ?.season ?? null)

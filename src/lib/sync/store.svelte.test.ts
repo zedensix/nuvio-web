@@ -364,6 +364,64 @@ describe("optimistic writes", () => {
 	});
 });
 
+describe("mark unwatched overrides imported history", () => {
+	it("clears progress and removes an older history record so the episode is no longer watched", async () => {
+		remote.syncSnapshot.mockResolvedValue(snapshot());
+		await sync.attach(1, USER_A);
+
+		// An imported history record with no progress row: the episode shows
+		// watched until the viewer marks it unwatched.
+		sync.restoreHistory({
+			id: "tt1::",
+			contentId: "tt1",
+			contentType: "movie",
+			title: "One",
+			season: null,
+			episode: null,
+			watchedAt: 1,
+		});
+		expect(sync.history).toHaveLength(1);
+		expect(sync.progress).toHaveLength(0);
+
+		sync.clearProgress({ contentId: "tt1", season: null, episode: null });
+		sync.deleteHistory({ contentId: "tt1", season: null, episode: null });
+
+		expect(sync.history).toHaveLength(0);
+		expect(sync.progress).toHaveLength(0);
+	});
+
+	it("removes only the targeted history row and leaves others untouched", async () => {
+		remote.syncSnapshot.mockResolvedValue(snapshot());
+		await sync.attach(1, USER_A);
+
+		sync.restoreHistory({
+			id: "tt1::",
+			contentId: "tt1",
+			contentType: "movie",
+			title: "One",
+			season: null,
+			episode: null,
+			watchedAt: 1,
+		});
+		sync.restoreHistory({
+			id: "tt2:1:2",
+			contentId: "tt2",
+			contentType: "series",
+			title: "Two",
+			season: 1,
+			episode: 2,
+			watchedAt: 2,
+		});
+		expect(sync.history).toHaveLength(2);
+
+		sync.deleteHistory({ contentId: "tt1", season: null, episode: null });
+
+		expect(sync.history).toEqual([
+			expect.objectContaining({ id: "tt2:1:2", contentId: "tt2" }),
+		]);
+	});
+});
+
 describe("flush failures", () => {
 	it("keeps the queue and reports stalled after two failures in a row", async () => {
 		remote.flushWrites.mockRejectedValue(new Error("offline"));

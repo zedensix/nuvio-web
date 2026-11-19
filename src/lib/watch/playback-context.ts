@@ -1,5 +1,6 @@
 import type { Meta, MetaVideo } from "#lib/addons/index.js";
 import { m } from "#lib/i18n/index.js";
+import type { HistoryRecord } from "#lib/sync/types.js";
 import { isAired, upcomingEpisode } from "./episodes.ts";
 
 /**
@@ -134,6 +135,50 @@ export function titleProgressFor(
 		}
 	}
 	return out;
+}
+
+/**
+ * The video ids this title counts as watched: every completed progress row,
+ * plus every history row whose (content id, season, episode) matches a listed
+ * video. History alone marks an episode watched with no resume position; the
+ * progress map (from `titleProgressFor`) still owns resume fractions and
+ * resume points, so this never invents a resume bar from an imported history
+ * record.
+ */
+export function watchedVideoIds(input: {
+	progress: TitleProgress;
+	history: readonly HistoryRecord[];
+	type: string;
+	id: string;
+	videos: readonly MetaVideo[];
+}): Set<string> {
+	const { progress, history, type, id, videos } = input;
+	const watched = new Set(
+		Object.keys(progress).filter((key) => progress[key]?.completed),
+	);
+	if (type === "movie") {
+		for (const entry of history) {
+			if (entry.contentId === id) {
+				watched.add(id);
+			}
+		}
+		return watched;
+	}
+	const contentIds = new Set([
+		id,
+		...videos.map((video) => parseVideoId("series", video.id).contentId),
+	]);
+	for (const entry of history) {
+		if (!contentIds.has(entry.contentId)) {
+			continue;
+		}
+		for (const video of videos) {
+			if (video.season === entry.season && video.episode === entry.episode) {
+				watched.add(video.id);
+			}
+		}
+	}
+	return watched;
 }
 
 /**

@@ -24,12 +24,15 @@
 		episodes,
 		currentVideoId,
 		progress = {},
+		watched,
 		onClose,
 		onSelect,
 	}: {
 		episodes: Episode[];
 		currentVideoId: string;
 		progress?: Record<string, { fraction: number; completed: boolean }>;
+		/** Video ids that count as watched (completed progress or history). */
+		watched?: Set<string>;
 		onClose: () => void;
 		onSelect: (videoId: string) => void;
 	} = $props();
@@ -124,10 +127,11 @@
 				{/if}
 
 				<div class="min-h-0 flex-1 overflow-y-auto p-2 scrollbar-thin">
-					{#each shown as entry (entry.videoId)}
-						{@const isCurrent = entry.videoId === currentVideoId}
-						{@const p = progress[entry.videoId]}
-						{@const date = airDate(entry.released)}
+						{#each shown as entry (entry.videoId)}
+							{@const isCurrent = entry.videoId === currentVideoId}
+							{@const p = progress[entry.videoId]}
+							{@const completed = watched?.has(entry.videoId) ?? p?.completed ?? false}
+							{@const date = airDate(entry.released)}
 						<button
 							type="button"
 							onclick={() => onSelect(entry.videoId)}
@@ -166,7 +170,7 @@
 								<p class="flex items-center gap-1.5 text-sm font-medium">
 									<span class="text-white/50">{entry.episode}.</span>
 									<span class="truncate">{entry.title}</span>
-									{#if p?.completed}
+									{#if completed}
 										<CheckIcon class="size-3.5 shrink-0 text-primary" />
 									{/if}
 									{#if isCurrent}

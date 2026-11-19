@@ -19,7 +19,10 @@
 	import { m } from "#lib/i18n/index.js";
 	import { sync } from "#lib/sync/store.svelte.js";
 	import { cn } from "#lib/utils.js";
-	import { titleProgressFor } from "#lib/watch/playback-context.js";
+	import {
+		titleProgressFor,
+		watchedVideoIds,
+	} from "#lib/watch/playback-context.js";
 	import { parseRuntimeMs } from "#lib/watch/runtime.js";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
@@ -93,10 +96,13 @@
 	);
 	const watched = $derived(
 		contentType === "movie" &&
-			Boolean(
-				titleProgressFor(sync.progress, "movie", item.id, undefined)[item.id]
-					?.completed,
-			),
+			watchedVideoIds({
+				progress: titleProgressFor(sync.progress, "movie", item.id, undefined),
+				history: sync.history,
+				type: "movie",
+				id: item.id,
+				videos: [],
+			}).has(item.id),
 	);
 
 	// The visible text comes first, in the order it renders (WCAG 2.5.3, label in name).

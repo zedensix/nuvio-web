@@ -50,6 +50,7 @@
 		resumePoint,
 		resumeRowFor,
 		titleProgressFor,
+		watchedVideoIds,
 	} from "#lib/watch/playback-context.js";
 	import { sourcesPanel } from "#lib/watch/sources-panel.svelte.js";
 	import {
@@ -70,7 +71,6 @@
 	import { page } from "$app/state";
 
 	let { data } = $props();
-
 	const type = $derived(page.params.type ?? "movie");
 	const id = $derived(page.params.id ?? "");
 	// Everything progress needs is in the URL: saves and the resume lookup
@@ -81,7 +81,6 @@
 			? `S${parsed.season}E${parsed.episode}`
 			: null,
 	);
-
 	// Meta / resume / next-episode context comes from the load, streamed, so
 	// the player shell still paints on navigation but doesn't then pay for a
 	// client round trip to find out what it's playing.
@@ -113,18 +112,15 @@
 	const context = $derived<PlaybackCtx>(
 		contextStream.current ?? contextFallback,
 	);
-
 	$effect(() => {
 		if (contextReady) {
 			pageTitle.set(context.heading);
 		}
 	});
-
 	// The source drawer, shared with /detail through the (watch) layout.
 	function openSources() {
 		sourcesPanel.open(type, id, selection);
 	}
-
 	// In-player episode drawer (series only).
 	let episodesOpen = $state(false);
 	const isSeries = $derived(context.metaType === "series");
@@ -135,23 +131,36 @@
 		episodesOpen = false;
 	});
 
+	// The episode ids, in the shape titleProgressFor and watchedVideoIds match
+	// on: video id plus season / episode. Local only until the store loads.
+	const episodeVideos = $derived(
+		context.episodes.map((entry) => ({
+			id: entry.videoId,
+			title: entry.title,
+			season: entry.season,
+			episode: entry.episode,
+		})),
+	);
+
 	// Matched by (season, episode) as well as id, so rows saved under a
 	// namespaced episode id and rows marked from the detail page both count.
-	// Local only: empty until the sync store has loaded, milliseconds in.
+	// Empty until the sync store has loaded.
 	const episodeProgress = $derived(
 		hasEpisodes
-			? titleProgressFor(
-					sync.progress,
-					type,
-					context.contentId,
-					context.episodes.map((entry) => ({
-						id: entry.videoId,
-						title: entry.title,
-						season: entry.season,
-						episode: entry.episode,
-					})),
-				)
+			? titleProgressFor(sync.progress, type, context.contentId, episodeVideos)
 			: {},
+	);
+
+	// Watched = completed progress or an imported history record covering the
+	// episode. Resume bars stay progress-only : history carries no fraction.
+	const watchedIds = $derived(
+		watchedVideoIds({
+			progress: episodeProgress,
+			history: sync.history,
+			type,
+			id: context.contentId,
+			videos: episodeVideos,
+		}),
 	);
 
 	function playVideo(videoId: string) {
@@ -183,7 +192,6 @@
 			};
 		});
 	});
-
 	function setQuery(patch: Record<string, string | null>) {
 		if (!browser) {
 			return;
@@ -205,7 +213,6 @@
 			// router not up yet : the next progress tick writes it
 		}
 	}
-
 	// The stream just picked in the drawer; else the one the URL names; else the
 	// tab's last pick; else a remembered link (if "reuse last link" is on and
 	// it's still fresh); else resolve one here on a cold load.
@@ -241,7 +248,6 @@
 			pickBingeStream(streams ?? [], bingeFrom) ??
 			pickPreferredStream(streams ?? [], theme.current.preferredQuality),
 	);
-
 	const active = $derived(
 		handed ??
 			(autoStream
@@ -959,6 +965,7 @@
       episodes={context.episodes}
       currentVideoId={context.videoId}
       progress={episodeProgress}
+      watched={watchedIds}
       onClose={() => (episodesOpen = false)}
       onSelect={playVideo}
     />

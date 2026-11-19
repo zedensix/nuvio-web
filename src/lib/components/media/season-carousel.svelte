@@ -18,6 +18,7 @@
 		videos,
 		seriesRuntime = null,
 		progress = {},
+		watched,
 		initialSeason = null,
 		playerHref,
 		onToggleWatched,
@@ -27,6 +28,8 @@
 		videos: MetaVideo[];
 		seriesRuntime?: string | null;
 		progress?: Record<string, { fraction: number; completed: boolean }>;
+		/** Video ids that count as watched (completed progress or history). */
+		watched?: Set<string>;
 		initialSeason?: number | null;
 		/** The player URL for an episode (already `resolve`d). A link, not a
 		 *  click handler, so hover preload warms the player route. */
@@ -82,9 +85,7 @@
 		grouped.find((g) => g.season === activeSeason) ?? grouped[0],
 	);
 	const watchedCount = $derived(
-		current
-			? current.episodes.filter((ep) => progress[ep.id]?.completed).length
-			: 0,
+		current ? current.episodes.filter((ep) => watched?.has(ep.id)).length : 0,
 	);
 	const totalEpisodes = $derived(
 		grouped.reduce((sum, group) => sum + group.episodes.length, 0),
@@ -221,10 +222,11 @@
     >
       {#each current.episodes as episode (episode.id)}
         {@const ep = progress[episode.id]}
+        {@const completed = watched?.has(episode.id) ?? false}
         {@const date = airDate(episode.released)}
         <ActionMenu
           title={episode.title}
-          actions={episodeActions(episode, Boolean(ep?.completed))}
+          actions={episodeActions(episode, completed)}
           contentClass="w-56"
         >
             <div
@@ -270,7 +272,7 @@
                       <PlayIcon class="size-5 translate-x-px fill-white" />
                     </span>
                   </span>
-                  {#if ep && !ep.completed && ep.fraction > 0.02}
+                  {#if ep && !completed && ep.fraction > 0.02}
                     <div class="absolute inset-x-0 bottom-0 h-1 bg-black/50">
                       <div
                         class="h-full rounded-r-full bg-primary"
@@ -283,7 +285,7 @@
                   <p
                     class={cn(
                       "line-clamp-1 text-sm font-semibold",
-                      ep?.completed && "text-muted-foreground",
+                      completed && "text-muted-foreground",
                     )}
                   >
                     <span class="text-muted-foreground">{episode.episode}.</span
@@ -314,10 +316,10 @@
               </a>
               <button
                 type="button"
-                aria-label={ep?.completed
+                aria-label={completed
                   ? m.common_mark_unwatched()
                   : m.common_mark_watched()}
-                title={ep?.completed
+                title={completed
                   ? m.common_mark_unwatched()
                   : m.common_mark_watched()}
                 onclick={() =>
@@ -325,11 +327,11 @@
                     episode.id,
                     episode.season ?? null,
                     episode.episode ?? null,
-                    Boolean(ep?.completed),
+                    completed,
                   )}
                 class={cn(
                   "absolute top-2 right-2 flex size-7 items-center justify-center rounded-full transition",
-                  ep?.completed
+                  completed
                     ? "bg-primary text-primary-foreground"
                     : "bg-black/50 text-white opacity-0 backdrop-blur-md group-hover/ep:opacity-100 hover:bg-black/70",
                 )}
