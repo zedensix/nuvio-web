@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.36](https://github.com/zedensix/nuvio-web/compare/v1.0.35...v1.0.36) (2026-11-19)
+
+### Features
+
+* count watch history as watched, paginate history, stream home rows (#78) ([5652118](https://github.com/zedensix/nuvio-web/commit/56521182bb97b56fe4fdf19a775e4c947b6e87ad))
+
 ## [1.0.35](https://github.com/zedensix/nuvio-web/compare/v1.0.34...v1.0.35) (2026-11-17)
 
 ### Bug Fixes
