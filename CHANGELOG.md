@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.37](https://github.com/zedensix/nuvio-web/compare/v1.0.36...v1.0.37) (2026-11-19)
+
+### Features
+
+* **calendar:** month view and redesign, plus server cache for profiles, avatars, home layout, collections and TVmaze ([d8b37dd](https://github.com/zedensix/nuvio-web/commit/d8b37dd100205f88ca7a34548f8a872a0dc93483))
+* optional Redis cache for addon answers, settings and last-played links, plus a loading state on profile pick ([834d54b](https://github.com/zedensix/nuvio-web/commit/834d54b99cc80d028fd13340b20dda5577e95336))
+
+### Performance Improvements
+
+* cache the layout's settings pulls per profile and load profiles and avatars in parallel ([bdb90f1](https://github.com/zedensix/nuvio-web/commit/bdb90f169bf068e34a61481440c21d6d058ea992))
+
 ## [1.0.36](https://github.com/zedensix/nuvio-web/compare/v1.0.35...v1.0.36) (2026-11-19)
 
 ### Features
