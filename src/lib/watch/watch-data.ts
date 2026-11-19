@@ -18,7 +18,7 @@ import {
 	resumePoint,
 	resumeRowFor,
 } from "./playback-context.ts";
-import { nextAiring, upcomingAfter } from "./schedule.ts";
+import { nextAiring, type ScheduleDeps, upcomingAfter } from "./schedule.ts";
 import type { ResolvedStream } from "./stream-format.ts";
 
 // Each row fans out to every meta-providing addon inside `getMeta`; an
@@ -213,7 +213,7 @@ export async function pullUpcoming(
 		next: unknown;
 		upcoming: UpcomingEpisode | null;
 	} | null,
-	fetchImpl: typeof fetch = fetch,
+	deps: ScheduleDeps = {},
 ): Promise<UpcomingEpisode | null> {
 	if (
 		context?.metaType !== "series" ||
@@ -229,7 +229,7 @@ export async function pullUpcoming(
 		context.contentId,
 		context.season,
 		context.episode,
-		fetchImpl,
+		deps,
 	);
 }
 
@@ -240,7 +240,7 @@ export async function pullUpcoming(
  */
 export async function pullNextToAir(
 	meta: Meta | null,
-	fetchImpl: typeof fetch = fetch,
+	deps: ScheduleDeps = {},
 ): Promise<UpcomingEpisode | null> {
 	if (meta?.type !== "series") {
 		return null;
@@ -263,13 +263,8 @@ export async function pullNextToAir(
 		undefined,
 	);
 	return last
-		? await upcomingAfter(
-				meta.id,
-				last.season ?? 0,
-				last.episode ?? 0,
-				fetchImpl,
-			)
-		: await nextAiring(meta.id, fetchImpl);
+		? await upcomingAfter(meta.id, last.season ?? 0, last.episode ?? 0, deps)
+		: await nextAiring(meta.id, deps);
 }
 
 /**

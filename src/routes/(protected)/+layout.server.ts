@@ -1,7 +1,8 @@
 import { redirect } from "@sveltejs/kit";
 import { httpUrlOrNull } from "#lib/core/url.js";
 import { safeColor, toProfileView } from "#lib/nuvio/profile.js";
-import { ADMIN } from "#lib/services/index.js";
+import { pullAvatars, pullProfiles } from "#lib/nuvio/profiles-data.js";
+import { ADMIN, CACHE } from "#lib/services/index.js";
 import { resolve } from "$app/paths";
 import type { LayoutServerLoad } from "./$types";
 
@@ -12,13 +13,15 @@ export const load: LayoutServerLoad = async ({ locals, url, fetch }) => {
 	}
 
 	const nuvio = locals.nuvio.withFetch(fetch);
+	const cache = locals.services.get(CACHE);
 
 	// The profile list is load-bearing (you can't pick a profile without it) so
 	// this one is allowed to fail loudly : but it's still 12s-bounded, never a
-	// hang. Avatars are cosmetic: fall back to initials.
+	// hang. Avatars are cosmetic: fall back to initials. Both are cached, so a
+	// warm page load waits on neither.
 	const [profileList, avatarList] = await Promise.allSettled([
-		nuvio.profiles.list(),
-		nuvio.listAvatars(),
+		pullProfiles(nuvio, cache, locals.session.accountKey),
+		pullAvatars(nuvio, cache),
 	]);
 	if (profileList.status === "rejected") {
 		throw profileList.reason;

@@ -206,18 +206,28 @@ export type {
  * after the page has shipped, hydrated and made a second round trip.
  */
 export async function homeCatalogRows(): Promise<queries.HomeRow[]> {
-	const { nuvio, profileId } = requireProfile();
+	const { event, nuvio, profileId, accountKey } = requireProfile();
 	// Started before the registry build, not after: the two don't depend on
 	// each other, and the layout pull is one small request.
-	const layout = pullHomeLayout(nuvio, profileId);
+	const layout = pullHomeLayout(
+		nuvio,
+		event.locals.services.get(CACHE),
+		accountKey,
+		profileId,
+	);
 	const { client, registry } = await getAddonClient();
 	return queries.homeCatalogRows(client, registry, await layout);
 }
 
 /** The home rows, each with its own `metas` promise : streamed row by row. */
 export async function homeCatalogSlots(): Promise<queries.HomeRowSlot[]> {
-	const { nuvio, profileId } = requireProfile();
-	const layout = pullHomeLayout(nuvio, profileId);
+	const { event, nuvio, profileId, accountKey } = requireProfile();
+	const layout = pullHomeLayout(
+		nuvio,
+		event.locals.services.get(CACHE),
+		accountKey,
+		profileId,
+	);
 	const { client, registry } = await getAddonClient();
 	return queries.homeCatalogSlots(client, registry, await layout);
 }

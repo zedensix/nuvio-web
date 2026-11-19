@@ -1,7 +1,9 @@
 import type { GenericSchema } from "valibot";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryCache } from "#lib/services/cache.service.js";
 
 const state = {
+	cache: new MemoryCache(),
 	collectionsPull: vi.fn(),
 	collectionsReplace: vi.fn(),
 	getCatalog: vi.fn(),
@@ -23,7 +25,7 @@ vi.mock("$app/server", async () => {
 
 vi.mock("#lib/server/guards.js", () => ({
 	requireProfile: () => ({
-		event: { locals: {}, fetch },
+		event: { locals: { services: { get: () => state.cache } }, fetch },
 		nuvio: {
 			collections: {
 				pull: state.collectionsPull,
@@ -31,6 +33,7 @@ vi.mock("#lib/server/guards.js", () => ({
 			},
 		},
 		profileId: 1,
+		accountKey: "u",
 	}),
 }));
 
@@ -47,6 +50,12 @@ beforeEach(() => {
 });
 
 describe("saveCollections", () => {
+	it("drops the cached collections once Nuvio has the new ones", async () => {
+		await state.cache.set("collections:u:1", [], 60_000);
+		await saveCollections([{ id: "c1", title: "One", folders: [] }]);
+		expect(await state.cache.get("collections:u:1")).toBeUndefined();
+	});
+
 	it("replaces the blob and reports the count", async () => {
 		const out = await saveCollections([
 			{ id: "c1", title: "One", folders: [] },

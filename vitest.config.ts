@@ -73,6 +73,7 @@ export default defineConfig({
 				// Sessions: the cookie glue, the encrypted token store and its key.
 				"src/lib/services/session*.ts",
 				"src/lib/services/cache.service.ts",
+				"src/lib/services/read-through.ts",
 				"src/lib/forms/*.ts",
 				// Rune modules the `runes` project covers. Named one by one rather
 				// than un-excluding `*.svelte.ts`: most of those are UI state that

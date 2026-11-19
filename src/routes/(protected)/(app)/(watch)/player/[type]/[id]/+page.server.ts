@@ -48,7 +48,9 @@ export const load: PageServerLoad = ({
 		),
 		// Its own promise, chained off the context, so a schedule lookup that
 		// has to go to TVmaze never holds up the player's heading.
-		upcoming: context.then((ctx) => pullUpcoming(ctx)).catch(() => null),
+		upcoming: context
+			.then((ctx) => pullUpcoming(ctx, { cache: locals.services.get(CACHE) }))
+			.catch(() => null),
 		// A URL that names its stream (a pick from the drawer, a reload) plays
 		// it from this browser's storage: no fan-out to the addons for it.
 		streams: url.searchParams.has("stream")

@@ -113,11 +113,12 @@
       `e2e/install-app.spec.ts` passes. Safari sends no architecture hint, so it
       gets the Apple Silicon build.
 - [ ] **Redis cache: watch it on a real instance.** `NUVIO_REDIS_URL` moves the
-      server cache (addon answers but stream lists, manifests, layout settings,
-      last-played links) from memory to Redis; e2e runs with it. Check on the
-      deployed instance that the first load after a redeploy no longer asks
-      every addon, that a Trakt-style catalog's 10 minutes isn't too stale, and
-      that "reuse last link" picks up a link played on another device.
+      server cache (addon answers but stream lists, manifests, TVmaze, profiles,
+      avatars, layout settings, home layout, collections, last-played links)
+      from memory to Redis; e2e runs with it. Check on the deployed instance
+      that the first load after a redeploy no longer asks every addon, that a
+      Trakt-style catalog's 10 minutes isn't too stale, and that "reuse last
+      link" picks up a link played on another device.
 - [ ] **Browser meta cache: confirm on Discover.** `hooks.server.ts` marks a
       title page's and Discover's navigation data, plus the addon-meta remote
       queries, `private, max-age=900`. Seen on a title page's `__data.json`

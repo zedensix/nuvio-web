@@ -1,4 +1,5 @@
 import { similarToTitle, titleMeta } from "#lib/addons/server.js";
+import { CACHE } from "#lib/services/index.js";
 import { profileData } from "#lib/userdata/server.js";
 import {
 	type TitleProgress,
@@ -32,7 +33,11 @@ export const load: PageServerLoad = ({ params, locals, fetch }) => {
 	// Chained the same way: the meta answers when it lists an unaired episode,
 	// and TVmaze only when it has run out.
 	const nextToAir = meta
-		.then((result) => pullNextToAir(result?.meta ?? null))
+		.then((result) =>
+			pullNextToAir(result?.meta ?? null, {
+				cache: locals.services.get(CACHE),
+			}),
+		)
 		.catch(() => null);
 
 	// Started now, alongside the meta, and joined to it once both land: which

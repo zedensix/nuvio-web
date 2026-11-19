@@ -3,6 +3,7 @@ import {
 	pullCollections,
 	pullFolderContents,
 } from "#lib/collections/collections-data.js";
+import { CACHE } from "#lib/services/index.js";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = ({ params, locals, fetch }) => {
@@ -10,6 +11,8 @@ export const load: PageServerLoad = ({ params, locals, fetch }) => {
 	// collection list and shows a "not found" state itself : no blocking 404.
 	const collections = pullCollections(
 		locals.nuvio.withFetch(fetch),
+		locals.services.get(CACHE),
+		locals.session?.accountKey,
 		locals.profileId ?? 0,
 	);
 	const collection = collections.then(

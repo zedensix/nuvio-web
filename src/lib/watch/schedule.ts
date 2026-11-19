@@ -1,4 +1,5 @@
-import { TtlCache } from "#lib/addons/cache.js";
+import { type Cache, MemoryCache } from "#lib/services/cache.service.js";
+import { readThrough } from "#lib/services/read-through.js";
 import type { UpcomingEpisode } from "./episodes.ts";
 
 /**
@@ -17,7 +18,17 @@ const TIMEOUT_MS = 5000;
 
 // Schedules move, but not by the minute; TVmaze asks for caching and allows 20
 // calls per 10 seconds per IP. Public data, safe to share across visitors.
-const cache = new TtlCache<UpcomingEpisode | null>(6 * 60 * 60_000);
+const SCHEDULE_TTL_MS = 6 * 60 * 60_000;
+
+/** For a caller without the server's shared cache (a test, a worker). */
+const localCache = new MemoryCache();
+
+/** The network and the cache, both swappable for a test. */
+export interface ScheduleDeps {
+	fetchImpl?: typeof fetch;
+	/** The request's `CACHE`, so the answers outlive a restart with Redis. */
+	cache?: Cache;
+}
 
 // That limit is the whole server's, so the window is too. A call past it isn't
 // made (nor cached): a big library fills in over a few visits instead of
@@ -98,24 +109,27 @@ async function getJson<T>(
  */
 export function nextAiring(
 	contentId: string,
-	fetchImpl: typeof fetch = fetch,
+	{ fetchImpl = fetch, cache = localCache }: ScheduleDeps = {},
 ): Promise<UpcomingEpisode | null> {
 	if (!/^tt\d{7,8}$/.test(contentId)) {
 		return Promise.resolve(null);
 	}
-	return cache
-		.wrap(contentId, async () => {
+	return readThrough(
+		cache,
+		`tvmaze:${contentId}`,
+		SCHEDULE_TTL_MS,
+		async () => {
 			const show = await getJson<TvmazeShow>(
 				`${TVMAZE_BASE}/lookup/shows?imdb=${contentId}`,
 				fetchImpl,
 			);
 			const href = show?._links?.nextepisode?.href;
-			if (!href?.startsWith(`${TVMAZE_BASE}/`)) {
-				return null;
-			}
-			return fromTvmazeEpisode(await getJson<TvmazeEpisode>(href, fetchImpl));
-		})
-		.catch(() => null);
+			const next = href?.startsWith(`${TVMAZE_BASE}/`)
+				? fromTvmazeEpisode(await getJson<TvmazeEpisode>(href, fetchImpl))
+				: null;
+			return { value: next, keep: true };
+		},
+	).catch(() => null);
 }
 
 /**
@@ -128,9 +142,9 @@ export async function upcomingAfter(
 	contentId: string,
 	season: number,
 	episode: number,
-	fetchImpl: typeof fetch = fetch,
+	deps: ScheduleDeps = {},
 ): Promise<UpcomingEpisode | null> {
-	const next = await nextAiring(contentId, fetchImpl);
+	const next = await nextAiring(contentId, deps);
 	if (!next) {
 		return null;
 	}

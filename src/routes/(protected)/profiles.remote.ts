@@ -5,7 +5,8 @@ import { safeRedirectPath } from "#lib/core/url.js";
 import { profileName } from "#lib/forms/schemas.js";
 import { m } from "#lib/i18n/index.js";
 import type { Profile, ProfileInput } from "#lib/nuvio/index.js";
-import { SESSION } from "#lib/services/index.js";
+import { forgetProfiles } from "#lib/nuvio/profiles-data.js";
+import { CACHE, SESSION } from "#lib/services/index.js";
 import { USER_DATA_STORE } from "#lib/userdata/tokens.js";
 import { resolve } from "$app/paths";
 import { form, getRequestEvent } from "$app/server";
@@ -33,6 +34,13 @@ const profileIndex = v.pipe(
 	v.minValue(1),
 	v.maxValue(MAX_PROFILES),
 );
+
+/** After a write, so the layout's cached list shows it on the next load. */
+async function forgetCachedProfiles(locals: App.Locals): Promise<void> {
+	if (locals.session) {
+		await forgetProfiles(locals.services.get(CACHE), locals.session.accountKey);
+	}
+}
 
 function toInput(profile: Profile): ProfileInput {
 	return {
@@ -97,6 +105,7 @@ export const createProfile = form(
 				},
 			],
 		});
+		await forgetCachedProfiles(locals);
 		locals.services.get(SESSION).writeProfileId(nextIndex, remember);
 		redirect(303, safeTarget(target));
 	},
@@ -146,6 +155,7 @@ export const updateProfile = form(
 				};
 			}),
 		});
+		await forgetCachedProfiles(locals);
 		if (nextUsesPrimary !== target.uses_primary_addons) {
 			invalidateRegistry();
 		}
@@ -186,6 +196,7 @@ export const deleteProfile = form(
 				.map(toInput),
 		});
 
+		await forgetCachedProfiles(locals);
 		const session = locals.services.get(SESSION);
 		if (session.readProfileId() === profileId) {
 			session.clearProfileId();

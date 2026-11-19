@@ -34,14 +34,23 @@ results. Recent queries are remembered locally so a repeat search is one click.
 
 ## Calendar
 
-The calendar lists the episodes of the series in your library: what aired in the
-past week and what is coming up, grouped by day (Today, Tomorrow, then the
-weekday and date, in your time zone and language). Each episode opens its
-series' page. Dates come from the same place as a detail page's "Airs" line: the
-addon's own episode listing, then TVmaze for the next airing when the listing
-has run out. A series whose addon cannot be reached is left out rather than
-failing the page. On a phone it is a tab of its own, between Library and
-Profile.
+The calendar lists the episodes of the series in your library. It has two views,
+switched at the top and kept in the URL (`?view=month&month=2026-11`):
+
+- **List**, the default: the next episode to air as a banner with how long is
+  left, then what is coming up and what aired in the past week, one row per day
+  (Today, Tomorrow, then the weekday and date, in your time zone and language).
+- **Month**: a month grid, weeks starting on the day your language starts them.
+  Each day shows what airs on it (a dot per episode on a phone); picking a day
+  lists its episodes under the grid. The arrows page through months, past ones
+  included.
+
+Each episode shows its still when the addon has one, with the air time when the
+listing gives one, and opens its series' page. Dates come from the same place as
+a detail page's "Airs" line: the addon's own episode listing, then TVmaze for
+the next airing when the listing has run out. A series whose addon cannot be
+reached is left out rather than failing the page. On a phone it is a tab of its
+own, between Library and Profile.
 
 The library marks a series **New episode** when an episode came out in the last
 seven days that you have neither started nor have in your watch history.

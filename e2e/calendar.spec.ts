@@ -36,6 +36,42 @@ test("calendar: lists episodes by day or says nothing is coming", async ({
 	expect(errors, "runtime errors").toEqual([]);
 });
 
+test("calendar: the month view pages through months and picks a day", async ({
+	page,
+}) => {
+	const errors = collectRuntimeErrors(page);
+
+	await page.goto("/calendar?view=month&month=2026-11");
+	await expect(
+		page.getByRole("heading", { name: "November 2026" }),
+	).toBeVisible();
+	const views = page.getByRole("navigation", { name: "View" });
+	await expect(views.getByRole("link", { name: "Month" })).toHaveAttribute(
+		"aria-current",
+		"page",
+	);
+
+	const fifteenth = page.getByRole("button", { name: /November 15/ });
+	await expect(fifteenth).toBeVisible({ timeout: 20_000 });
+	await fifteenth.click();
+	await expect(fifteenth).toHaveAttribute("aria-pressed", "true");
+	await expect(
+		page.getByRole("heading", { level: 3, name: /November 15/ }),
+	).toBeVisible();
+
+	await page.getByRole("link", { name: "Next month" }).click();
+	await expect(page).toHaveURL(/month=2026-12/);
+	await expect(
+		page.getByRole("heading", { name: "December 2026" }),
+	).toBeVisible();
+
+	await views.getByRole("link", { name: "List" }).click();
+	await expect(page).toHaveURL(/\/calendar$/);
+	await page.waitForTimeout(500);
+
+	expect(errors, "runtime errors").toEqual([]);
+});
+
 test("calendar: the phone tab bar has a Calendar tab", async ({ page }) => {
 	const errors = collectRuntimeErrors(page);
 

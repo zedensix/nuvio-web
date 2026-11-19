@@ -416,6 +416,25 @@
 	"auth_sign_up": "Registrieren",
 	"auth_sign_up_description": "Registriere dich mit deiner E-Mail-Adresse und einem Passwort.",
 	"auth_tagline": "Deine Bibliothek, überall.",
+	"calendar_day_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} Folge",
+				"countPlural=other": "{count} Folgen"
+			}
+		}
+	],
+	"calendar_day_empty": "An diesem Tag läuft nichts.",
+	"calendar_month_empty": "Aus deiner Bibliothek läuft diesen Monat nichts.",
+	"calendar_next_month": "Nächster Monat",
+	"calendar_previous_month": "Vorheriger Monat",
+	"calendar_this_month": "Dieser Monat",
+	"calendar_up_next": "Als Nächstes",
+	"calendar_view": "Ansicht",
+	"calendar_view_list": "Liste",
+	"calendar_view_month": "Monat",
 	"calendar_empty_description": "Füge Serien zu deiner Bibliothek hinzu, dann erscheinen ihre neuen Folgen hier.",
 	"calendar_empty_title": "Nichts im Kalender",
 	"calendar_recent": "Kürzlich ausgestrahlt",

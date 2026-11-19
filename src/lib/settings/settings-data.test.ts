@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NuvioClient } from "#lib/nuvio/index.js";
 import { MemoryCache } from "#lib/services/cache.service.js";
 import {
+	forgetHomeLayout,
 	forgetShellSettings,
+	pullHomeLayout,
 	pullSettingsBlob,
 	pullShellSettings,
 } from "./settings-data.ts";
@@ -136,5 +138,46 @@ describe("pullShellSettings", () => {
 		await forgetShellSettings(cache, account, 1);
 		await pullShellSettings(nuvio, cache, account, 1);
 		expect(pull).toHaveBeenCalledTimes(4);
+	});
+});
+
+describe("pullHomeLayout", () => {
+	function homeNuvio(rows: unknown[] | Error) {
+		const pull = vi.fn(() =>
+			rows instanceof Error ? Promise.reject(rows) : Promise.resolve(rows),
+		);
+		return {
+			nuvio: { homeCatalog: { pull } } as unknown as NuvioClient,
+			pull,
+		};
+	}
+
+	it("parses the saved layout and keeps it until forgotten", async () => {
+		const cache = new MemoryCache();
+		const { nuvio, pull } = homeNuvio([
+			{ settings_json: { rows: ["a|movie|top"], hidden_catalogs: [] } },
+		]);
+		const layout = await pullHomeLayout(nuvio, cache, "u", 1);
+		expect(layout.rows).toEqual(["a|movie|top"]);
+		await pullHomeLayout(nuvio, cache, "u", 1);
+		expect(pull).toHaveBeenCalledTimes(1);
+		await forgetHomeLayout(cache, "u", 1);
+		await pullHomeLayout(nuvio, cache, "u", 1);
+		expect(pull).toHaveBeenCalledTimes(2);
+	});
+
+	it("is the empty layout on a failure or no row, and skips the cache without an account", async () => {
+		const cache = new MemoryCache();
+		const failing = homeNuvio(new Error("down"));
+		expect((await pullHomeLayout(failing.nuvio, cache, "u", 1)).rows).toEqual(
+			[],
+		);
+		await pullHomeLayout(failing.nuvio, cache, "u", 1);
+		expect(failing.pull).toHaveBeenCalledTimes(2);
+
+		const empty = homeNuvio([]);
+		await pullHomeLayout(empty.nuvio, cache, undefined, 1);
+		await pullHomeLayout(empty.nuvio, cache, undefined, 1);
+		expect(empty.pull).toHaveBeenCalledTimes(2);
 	});
 });

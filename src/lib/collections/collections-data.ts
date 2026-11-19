@@ -7,14 +7,50 @@ import type {
 	CollectionFolder,
 	NuvioClient,
 } from "#lib/nuvio/index.js";
+import type { Cache } from "#lib/services/cache.service.js";
+import { forget, readThrough } from "#lib/services/read-through.js";
 
-/** This profile's collections blob, or `[]` on any failure. */
-export async function pullCollections(
+const COLLECTIONS_TTL_MS = 5 * 60_000;
+
+function collectionsKey(accountKey: string, profileId: number): string {
+	return `collections:${accountKey}:${profileId}`;
+}
+
+/**
+ * This profile's collections blob, or `[]` on any failure (not kept). Cached:
+ * both collection pages read it, and only a save (here or in another Nuvio
+ * client, which shows once the entry expires) changes it.
+ */
+export function pullCollections(
 	nuvio: NuvioClient,
+	cache: Cache,
+	accountKey: string | undefined,
 	profileId: number,
 ): Promise<Collection[]> {
-	const blobs = await nuvio.collections.pull(profileId).catch(() => []);
-	return normalizeCollections(blobs[0]?.collections_json);
+	return readThrough(
+		cache,
+		accountKey ? collectionsKey(accountKey, profileId) : null,
+		COLLECTIONS_TTL_MS,
+		async () => {
+			try {
+				const blobs = await nuvio.collections.pull(profileId);
+				return {
+					value: normalizeCollections(blobs[0]?.collections_json),
+					keep: true,
+				};
+			} catch {
+				return { value: [], keep: false };
+			}
+		},
+	);
+}
+
+export function forgetCollections(
+	cache: Cache,
+	accountKey: string,
+	profileId: number,
+): Promise<void> {
+	return forget(cache, collectionsKey(accountKey, profileId));
 }
 
 type Keyed = Record<string, unknown> & { id: string; title: string };

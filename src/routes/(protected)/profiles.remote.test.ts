@@ -56,15 +56,18 @@ const issue = new Proxy(
 	{ get: (_t, field: string) => (msg: string) => ({ field, msg }) },
 ) as Record<string, (msg: string) => unknown>;
 
-import { Container, SESSION } from "#lib/services/index.js";
+import { MemoryCache } from "#lib/services/cache.service.js";
+import { CACHE, Container, SESSION } from "#lib/services/index.js";
 import { USER_DATA_STORE } from "#lib/userdata/tokens.js";
 import * as profileForms from "./profiles.remote.js";
 
 // The handlers resolve SessionService off the request scope, so the fake goes
 // in through a real container rather than a module mock.
 const userData = { clearProfile: vi.fn() };
+const cache = new MemoryCache();
 event.locals.services = new Container("test")
 	.provide(SESSION, session as never)
+	.provide(CACHE, cache)
 	.provide(USER_DATA_STORE, userData as never);
 
 // `form(...)` results aren't callable in their public type; drive the handler.
@@ -250,6 +253,18 @@ describe("deleteProfile", () => {
 		expect(profiles.deleteData.mock.invocationCallOrder.at(-1)).toBeLessThan(
 			userData.clearProfile.mock.invocationCallOrder[0],
 		);
+		event.locals.session = undefined;
+	});
+
+	it("drops the layout's cached profile list after a write", async () => {
+		profiles.list.mockResolvedValue([profile(1), profile(2)]);
+		event.locals.session = { user: { id: "u" }, accountKey: "u" };
+		await cache.set("profiles:u", [profile(1)], 60_000);
+
+		await expect(deleteProfile({ profileId: 2 }, issue)).rejects.toMatchObject({
+			location: "profiles",
+		});
+		expect(await cache.get("profiles:u")).toBeUndefined();
 		event.locals.session = undefined;
 	});
 

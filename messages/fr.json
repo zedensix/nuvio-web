@@ -416,6 +416,25 @@
 	"auth_sign_up": "S'inscrire",
 	"auth_sign_up_description": "Inscrivez-vous avec votre e-mail et un mot de passe.",
 	"auth_tagline": "Votre bibliothèque, partout.",
+	"calendar_day_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} épisode",
+				"countPlural=other": "{count} épisodes"
+			}
+		}
+	],
+	"calendar_day_empty": "Rien ne sort ce jour-là.",
+	"calendar_month_empty": "Rien de votre bibliothèque ne sort ce mois-ci.",
+	"calendar_next_month": "Mois suivant",
+	"calendar_previous_month": "Mois précédent",
+	"calendar_this_month": "Ce mois-ci",
+	"calendar_up_next": "Prochain épisode",
+	"calendar_view": "Affichage",
+	"calendar_view_list": "Liste",
+	"calendar_view_month": "Mois",
 	"calendar_empty_description": "Ajoutez des séries à votre bibliothèque et leurs nouveaux épisodes apparaîtront ici.",
 	"calendar_empty_title": "Rien au calendrier",
 	"calendar_recent": "Diffusés récemment",

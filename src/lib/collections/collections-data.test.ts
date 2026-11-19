@@ -9,9 +9,11 @@ vi.mock("#lib/addons/server.js", () => ({
 
 import type { MetaPreview } from "#lib/addons/types.js";
 import type { CollectionFolder, NuvioClient } from "#lib/nuvio/index.js";
+import { MemoryCache } from "#lib/services/cache.service.js";
 import {
 	type CatalogFetcher,
 	folderContents,
+	forgetCollections,
 	pullCollections,
 	pullFolderContents,
 } from "./collections-data.ts";
@@ -153,6 +155,8 @@ describe("pullCollections", () => {
 				},
 				{ id: "a", title: "A2", folders: [] },
 			]),
+			new MemoryCache(),
+			undefined,
 			1,
 		);
 		expect(result.map((entry) => entry.title)).toEqual(["A2", "B"]);
@@ -169,6 +173,8 @@ describe("pullCollections", () => {
 					{ id: "b", title: "B", folders: [{ title: "no id" }, null] },
 				]),
 			),
+			new MemoryCache(),
+			undefined,
 			1,
 		);
 		expect(result).toEqual([
@@ -178,7 +184,38 @@ describe("pullCollections", () => {
 	});
 
 	it("is [] for a blob that is not a list", async () => {
-		expect(await pullCollections(nuvio("{not json"), 1)).toEqual([]);
-		expect(await pullCollections(nuvio({ id: "a" }), 1)).toEqual([]);
+		const cache = new MemoryCache();
+		expect(
+			await pullCollections(nuvio("{not json"), cache, undefined, 1),
+		).toEqual([]);
+		expect(
+			await pullCollections(nuvio({ id: "a" }), cache, undefined, 1),
+		).toEqual([]);
+	});
+
+	it("pulls once per account and profile until a save forgets it", async () => {
+		const cache = new MemoryCache();
+		const pull = vi.fn(async () => [
+			{ collections_json: [{ id: "a", title: "A", folders: [] }] },
+		]);
+		const client = { collections: { pull } } as unknown as NuvioClient;
+		await pullCollections(client, cache, "u", 1);
+		await pullCollections(client, cache, "u", 1);
+		expect(pull).toHaveBeenCalledTimes(1);
+		await pullCollections(client, cache, "u", 2);
+		await pullCollections(client, cache, "v", 1);
+		expect(pull).toHaveBeenCalledTimes(3);
+		await forgetCollections(cache, "u", 1);
+		await pullCollections(client, cache, "u", 1);
+		expect(pull).toHaveBeenCalledTimes(4);
+	});
+
+	it("falls back to [] on a failed pull and doesn't keep it", async () => {
+		const cache = new MemoryCache();
+		const pull = vi.fn(() => Promise.reject(new Error("down")));
+		const client = { collections: { pull } } as unknown as NuvioClient;
+		expect(await pullCollections(client, cache, "u", 1)).toEqual([]);
+		await pullCollections(client, cache, "u", 1);
+		expect(pull).toHaveBeenCalledTimes(2);
 	});
 });

@@ -350,7 +350,7 @@ describe("pullUpcoming", () => {
 	it("uses the meta's own unaired episode without asking TVmaze", async () => {
 		const fetchImpl = tvmazeAnswering(tvmazeS2E1);
 		expect(
-			await pullUpcoming({ ...base, upcoming: scheduled }, fetchImpl),
+			await pullUpcoming({ ...base, upcoming: scheduled }, { fetchImpl }),
 		).toBe(scheduled);
 		expect(fetchImpl).not.toHaveBeenCalled();
 	});
@@ -358,7 +358,7 @@ describe("pullUpcoming", () => {
 	it("asks nothing when there is an aired next episode", async () => {
 		const fetchImpl = tvmazeAnswering(tvmazeS2E1);
 		expect(
-			await pullUpcoming({ ...base, next: { videoId: "x" } }, fetchImpl),
+			await pullUpcoming({ ...base, next: { videoId: "x" } }, { fetchImpl }),
 		).toBeNull();
 		expect(fetchImpl).not.toHaveBeenCalled();
 	});
@@ -367,7 +367,7 @@ describe("pullUpcoming", () => {
 		expect(
 			await pullUpcoming(
 				{ ...base, contentId: "tt9000002" },
-				tvmazeAnswering(tvmazeS2E1),
+				{ fetchImpl: tvmazeAnswering(tvmazeS2E1) },
 			),
 		).toMatchObject({ season: 2, episode: 1 });
 	});
@@ -375,9 +375,9 @@ describe("pullUpcoming", () => {
 	it("is null for a movie or a missing context", async () => {
 		const fetchImpl = tvmazeAnswering(tvmazeS2E1);
 		expect(
-			await pullUpcoming({ ...base, metaType: "movie" }, fetchImpl),
+			await pullUpcoming({ ...base, metaType: "movie" }, { fetchImpl }),
 		).toBeNull();
-		expect(await pullUpcoming(null, fetchImpl)).toBeNull();
+		expect(await pullUpcoming(null, { fetchImpl })).toBeNull();
 		expect(fetchImpl).not.toHaveBeenCalled();
 	});
 });
@@ -405,7 +405,7 @@ describe("pullNextToAir", () => {
 					released: "2099-02-02T00:00:00Z",
 				},
 			] as NonNullable<Meta["videos"]>),
-			fetchImpl,
+			{ fetchImpl },
 		);
 		expect(result).toMatchObject({ season: 1, episode: 2, title: "Two" });
 		expect(fetchImpl).not.toHaveBeenCalled();
@@ -420,7 +420,7 @@ describe("pullNextToAir", () => {
 				] as NonNullable<Meta["videos"]>,
 				"tt9000004",
 			),
-			tvmazeAnswering(tvmazeS2E1),
+			{ fetchImpl: tvmazeAnswering(tvmazeS2E1) },
 		);
 		expect(result).toMatchObject({ season: 2, episode: 1 });
 	});
@@ -433,14 +433,16 @@ describe("pullNextToAir", () => {
 				>,
 				"tt9000005",
 			),
-			tvmazeAnswering(tvmazeS2E1),
+			{ fetchImpl: tvmazeAnswering(tvmazeS2E1) },
 		);
 		expect(result).toBeNull();
 	});
 
 	it("asks TVmaze outright when the meta lists no episodes", async () => {
 		expect(
-			await pullNextToAir(series([], "tt9000006"), tvmazeAnswering(tvmazeS2E1)),
+			await pullNextToAir(series([], "tt9000006"), {
+				fetchImpl: tvmazeAnswering(tvmazeS2E1),
+			}),
 		).toMatchObject({ season: 2 });
 	});
 

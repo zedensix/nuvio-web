@@ -11,6 +11,7 @@ const pages = [
 	{ name: "discover", path: "/discover" },
 	{ name: "library", path: "/library" },
 	{ name: "calendar", path: "/calendar" },
+	{ name: "calendar-month", path: "/calendar?view=month" },
 	{ name: "collections", path: "/collections" },
 	{ name: "settings", path: "/settings" },
 	{ name: "settings-appearance", path: "/settings/appearance" },

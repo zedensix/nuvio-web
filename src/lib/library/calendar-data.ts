@@ -7,6 +7,7 @@ import { titleProgressFor } from "#lib/watch/playback-context.js";
 import { type MetaLookup, pullNextToAir } from "#lib/watch/watch-data.js";
 import {
 	type CalendarEntry,
+	type CalendarWindow,
 	hasNewEpisode,
 	seriesEpisodes,
 } from "./calendar.ts";
@@ -29,11 +30,12 @@ async function librarySeries(
 	);
 }
 
+/** What the library's series air inside `window`. */
 export async function pullCalendar(
 	data: ProfileData,
 	lookupMeta: MetaLookup,
+	window: CalendarWindow,
 	nextToAir: (meta: Meta) => Promise<UpcomingEpisode | null> = pullNextToAir,
-	now = Date.now(),
 ): Promise<CalendarEntry[]> {
 	const series = await librarySeries(data, lookupMeta);
 	const perSeries = await pooledMap(
@@ -44,11 +46,12 @@ export async function pullCalendar(
 				return [];
 			}
 			const next = await nextToAir(meta).catch(() => null);
-			return seriesEpisodes(meta.videos, next, now).map((episode) => ({
+			return seriesEpisodes(meta.videos, next, window).map((episode) => ({
 				...episode,
 				id: item.contentId,
 				name: meta.name || item.name,
 				poster: meta.poster ?? item.poster,
+				still: episode.still ?? meta.background ?? item.background,
 			}));
 		},
 	);

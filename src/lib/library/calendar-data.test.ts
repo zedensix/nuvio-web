@@ -6,6 +6,7 @@ import type {
 	ProgressRecord,
 } from "#lib/sync/types.js";
 import type { ProfileData } from "#lib/userdata/types.js";
+import { recentWindow } from "./calendar.ts";
 import { pullCalendar, pullNewEpisodes } from "./calendar-data.ts";
 
 const NOW = Date.parse("2026-11-02T12:00:00Z");
@@ -60,6 +61,7 @@ const metas: Record<string, Meta> = {
 				season: 1,
 				episode: 2,
 				released: "2026-11-07T00:00:00Z",
+				thumbnail: "still-2",
 			},
 		],
 	},
@@ -74,11 +76,40 @@ const lookup = async (_type: string, id: string) => {
 
 describe("pullCalendar", () => {
 	it("lists the library's series episodes and skips a series whose lookup fails", async () => {
-		const entries = await pullCalendar(data(), lookup, async () => null, NOW);
+		const entries = await pullCalendar(
+			data(),
+			lookup,
+			recentWindow(NOW),
+			async () => null,
+		);
 		expect(entries.map((item) => [item.id, item.name, item.episode])).toEqual([
 			["tt1", "One", 1],
 			["tt1", "One", 2],
 		]);
+	});
+
+	it("uses the episode's still, else the series backdrop, and only the window's dates", async () => {
+		const withBackdrop = async (type: string, id: string) =>
+			id === "tt1" ? { ...metas.tt1, background: "bg" } : lookup(type, id);
+		const entries = await pullCalendar(
+			data(),
+			withBackdrop,
+			{
+				from: Date.parse("2026-11-01T00:00:00Z"),
+				to: Date.parse("2026-12-01T00:00:00Z"),
+			},
+			async () => null,
+		);
+		expect(entries.map((item) => [item.episode, item.still])).toEqual([
+			[2, "still-2"],
+		]);
+		const both = await pullCalendar(
+			data(),
+			withBackdrop,
+			recentWindow(NOW),
+			async () => null,
+		);
+		expect(both.map((item) => item.still)).toEqual(["bg", "still-2"]);
 	});
 
 	it("degrades to empty when the library read fails", async () => {
@@ -87,9 +118,9 @@ describe("pullCalendar", () => {
 				throw new Error("down");
 			},
 		});
-		expect(await pullCalendar(failing, lookup, async () => null, NOW)).toEqual(
-			[],
-		);
+		expect(
+			await pullCalendar(failing, lookup, recentWindow(NOW), async () => null),
+		).toEqual([]);
 	});
 });
 

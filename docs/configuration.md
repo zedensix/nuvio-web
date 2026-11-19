@@ -146,10 +146,18 @@ else is lost.
 | `NUVIO_REDIS_URL` | unset   | `redis://[user:password@]host:port[/db]`, `rediss://` for TLS |
 
 The server caches addon answers (manifests, catalogs, titles' details,
-subtitles, addon directories), each profile's layout settings, and the stream
-that last played each video (for **Reuse last link**, on every device). Unset,
-that cache lives in memory and a restart or redeploy empties it; the first page
-after one asks every addon again. Set, it lives in Redis and survives both.
+subtitles, addon directories), TVmaze's next airings, the account's profiles,
+Nuvio's avatar catalog, and each profile's layout settings, home layout and
+collections, plus the stream that last played each video (for **Reuse last
+link**, on every device). Unset, that cache lives in the server's memory (capped
+at 5,000 entries) and a restart or redeploy empties it; the first page after one
+asks every addon again. Set, it lives in Redis and survives both.
+
+A save made here clears its entry at once. One made in another Nuvio client
+(profiles, settings, home layout, collections) shows once the entry expires,
+within five minutes. Picking a profile and the PIN check always ask Nuvio.
+Library, watch progress and history are never cached: this server's database
+already holds them.
 
 Redis is never the source of truth: while it is unreachable the server logs one
 warning a minute and asks the addons directly. Give it a memory cap and an

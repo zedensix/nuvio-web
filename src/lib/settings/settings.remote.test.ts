@@ -85,4 +85,17 @@ describe("saveHomeLayout", () => {
 			p_settings_json: layout,
 		});
 	});
+
+	it("caches the new layout, and drops it when Nuvio refuses it", async () => {
+		const layout = { rows: [], hidden_catalogs: ["a|movie|x"] };
+		state.homeReplace = vi.fn(async () => undefined);
+		await saveHomeLayout(layout);
+		expect(await state.cache.get("home-layout:u:3")).toEqual(layout);
+
+		state.homeReplace = vi.fn(async () => {
+			throw new Error("down");
+		});
+		await expect(saveHomeLayout(layout)).rejects.toThrow("down");
+		expect(await state.cache.get("home-layout:u:3")).toBeUndefined();
+	});
 });

@@ -2,8 +2,9 @@ import * as v from "valibot";
 import { getAddonClient } from "#lib/addons/server.js";
 import type { MetaPreview } from "#lib/addons/types.js";
 import { requireProfile } from "#lib/server/guards.js";
+import { CACHE } from "#lib/services/index.js";
 import { command, query } from "$app/server";
-import { folderContents } from "./collections-data.ts";
+import { folderContents, forgetCollections } from "./collections-data.ts";
 
 // Loose on purpose: the Nuvio apps store fields this client never edits, and
 // the push is a full replace, so anything a schema strips is deleted for them.
@@ -30,11 +31,16 @@ const collectionsSchema = v.array(
 export const saveCollections = command(
 	collectionsSchema,
 	async (collections) => {
-		const { nuvio, profileId } = requireProfile();
+		const { event, nuvio, profileId, accountKey } = requireProfile();
 		await nuvio.collections.replace({
 			p_profile_id: profileId,
 			p_collections_json: collections,
 		});
+		await forgetCollections(
+			event.locals.services.get(CACHE),
+			accountKey,
+			profileId,
+		);
 		return { count: collections.length };
 	},
 );
