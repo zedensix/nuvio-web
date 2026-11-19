@@ -13,7 +13,10 @@ async function pickExternalPlayer(page: Page, label: string) {
 	await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
 	await page.getByRole("combobox", { name: "External player" }).click();
 	await page.getByRole("option", { name: label }).click();
-	await expect(page.getByText("Saved")).toBeVisible({ timeout: 5000 });
+	// Exact: the hint's "isn't saved" matches a substring search before the save lands.
+	await expect(page.getByText("Saved", { exact: true })).toBeVisible({
+		timeout: 5000,
+	});
 }
 
 // iOS Safari decodes only a fraction of addon streams; with an external player

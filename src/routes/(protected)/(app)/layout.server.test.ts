@@ -7,8 +7,7 @@ vi.mock("@sveltejs/kit", () => ({
 }));
 vi.mock("$app/paths", () => ({ resolve: (path: string) => path }));
 vi.mock("#lib/settings/settings-data.js", () => ({
-	pullUiSettings: async () => ({ marker: "ui" }),
-	pullAppAudioLanguage: async () => null,
+	pullShellSettings: async () => ({ ui: { marker: "ui" }, appAudio: null }),
 }));
 
 import { LOCAL_DOWNLOADS } from "#lib/downloads/tokens.js";
@@ -21,7 +20,12 @@ function call(profileId: number | null, pinEnabled = false, onDisk = false) {
 		onDisk ? ({} as never) : null,
 	);
 	return load({
-		locals: { profileId, nuvio: { withFetch: () => ({}) }, services },
+		locals: {
+			session: { accountKey: "u" },
+			profileId,
+			nuvio: { withFetch: () => ({}) },
+			services,
+		},
 		parent: async () => ({
 			profiles: [{ profile_index: 2, pin_enabled: pinEnabled }],
 		}),
@@ -34,6 +38,7 @@ describe("(app) layout", () => {
 	it("loads the selected profile", async () => {
 		await expect(call(2)).resolves.toMatchObject({
 			profile: { profile_index: 2 },
+			ui: { marker: "ui" },
 		});
 	});
 

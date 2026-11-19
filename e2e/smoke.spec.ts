@@ -86,7 +86,9 @@ test("settings: TheIntroDB key saves on blur and survives a reload", async ({
 
 	await input.fill("e2e-test-key");
 	await input.blur();
-	await expect(page.getByText("Saved")).toBeVisible({ timeout: 5000 });
+	await expect(page.getByText("Saved", { exact: true })).toBeVisible({
+		timeout: 5000,
+	});
 
 	await page.reload();
 	await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
@@ -95,7 +97,9 @@ test("settings: TheIntroDB key saves on blur and survives a reload", async ({
 	// Restore: clear what this test wrote.
 	await page.locator("#introdb-key").fill("");
 	await page.locator("#introdb-key").blur();
-	await expect(page.getByText("Saved")).toBeVisible({ timeout: 5000 });
+	await expect(page.getByText("Saved", { exact: true })).toBeVisible({
+		timeout: 5000,
+	});
 
 	expect(errors, "runtime errors").toEqual([]);
 });

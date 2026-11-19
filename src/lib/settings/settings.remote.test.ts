@@ -23,10 +23,12 @@ vi.mock("#lib/server/guards.js", () => ({
 			},
 		},
 		profileId: 3,
+		accountKey: "u",
 	}),
 }));
 
 import { saveHomeLayout, saveUiSettings } from "./settings.remote.ts";
+import * as data from "./settings-data.ts";
 
 const defaults = v.parse(uiSettingsSchema, {});
 
@@ -50,6 +52,12 @@ describe("saveUiSettings", () => {
 			p_platform: "web",
 			p_settings_json: { keepThis: true, ui: next, uiVersion: 1 },
 		});
+	});
+
+	it("drops the cached shell settings once written", async () => {
+		const forget = vi.spyOn(data, "forgetShellSettings");
+		await saveUiSettings(defaults);
+		expect(forget).toHaveBeenCalledWith("u", 3);
 	});
 
 	it("still writes when there's no prior blob", async () => {
