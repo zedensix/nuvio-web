@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.38](https://github.com/zedensix/nuvio-web/compare/v1.0.37...v1.0.38) (2026-11-19)
+
+### Bug Fixes
+
+* **admin:** stop calling window totals "per day" and leave marked-as-watched episodes out of play stats ([c576e38](https://github.com/zedensix/nuvio-web/commit/c576e38b1cdea48957aba9785a1f99d2de6d6ae4))
+
 ## [1.0.37](https://github.com/zedensix/nuvio-web/compare/v1.0.36...v1.0.37) (2026-11-19)
 
 ### Features
