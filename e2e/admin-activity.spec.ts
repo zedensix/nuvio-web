@@ -98,7 +98,7 @@ test("admin: the activity chart counts the event log and stays accessible", asyn
 	// The headline total, and one bar per day in the window.
 	const figure = page
 		.getByRole("figure")
-		.filter({ hasText: "Sign-ins per day" });
+		.filter({ hasText: "Sign-ins · last" });
 	await expect(figure).toContainText(String(total));
 	await expect(figure.getByRole("img")).toHaveAttribute(
 		"aria-label",

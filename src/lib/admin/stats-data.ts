@@ -49,6 +49,11 @@ function startOfUtcDay(timestamp: number): number {
 	return timestamp - (timestamp % MS_PER_DAY);
 }
 
+// "Mark as watched" writes a progress row with the position exactly at the
+// duration (the player's own ticks never land there), so it isn't a play.
+const PLAYED = `NOT (json_extract(record, '$.duration') > 0
+	AND json_extract(record, '$.position') = json_extract(record, '$.duration'))`;
+
 function hasUserData(db: Database): boolean {
 	return (
 		db
@@ -108,7 +113,8 @@ function watchTotals(
 						ELSE json_extract(record, '$.position') END
 				)) AS watched
 			FROM userdata_records
-			WHERE entity = 'progress' AND deleted = 0 AND updated_at >= ? AND updated_at < ?`,
+			WHERE entity = 'progress' AND deleted = 0 AND ${PLAYED}
+				AND updated_at >= ? AND updated_at < ?`,
 		)
 		.get(from, to);
 	return {
@@ -245,7 +251,7 @@ export function playsPerDay(
 			`SELECT strftime('%Y-%m-%d', updated_at / 1000, 'unixepoch') AS day,
 				COUNT(*) AS value, COUNT(DISTINCT user_id) AS people
 			FROM userdata_records
-			WHERE entity = 'progress' AND deleted = 0 AND updated_at >= ?
+			WHERE entity = 'progress' AND deleted = 0 AND ${PLAYED} AND updated_at >= ?
 			GROUP BY day`,
 		)
 		.all(firstDay(now, days));
@@ -318,7 +324,7 @@ export function topTitles(
 			`SELECT json_extract(record, '$.contentId') AS content_id,
 				MAX(json_extract(record, '$.contentType')) AS content_type,
 				COUNT(DISTINCT user_id) AS accounts,
-				SUM(entity = 'progress') AS plays
+				SUM(entity = 'progress' AND ${PLAYED}) AS plays
 			FROM userdata_records
 			WHERE entity IN ('progress', 'history') AND deleted = 0 AND updated_at >= ?
 			GROUP BY content_id

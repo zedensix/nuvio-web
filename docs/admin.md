@@ -143,8 +143,10 @@ holds up the rest. Days are UTC. A person is counted by their folded email.
 - **Videos played** and **Hours watched**: watch-progress rows last played in
   the last 7 days, and the positions reached on them (capped at the duration).
   Only the latest state of each video is stored, so a video played on Monday and
-  again on Friday counts once, on Friday. Treat it as "how much was watched",
-  not as an exact play log.
+  again on Friday counts once, on Friday. An episode marked as watched (its
+  position written exactly at its duration) is neither a play nor watch time:
+  marking a season would otherwise add a whole season in one click. Treat it as
+  "how much was watched", not as an exact play log.
 
 **Most watched this week**: titles with progress or history in the last 7 days,
 ranked by how many accounts played them, named from the library or history
@@ -152,8 +154,9 @@ records. **Returning and new people**: everyone active in each of the last eight
 7-day blocks, split by whether it was their first block on this server.
 
 Below a **Last 30 / 90 days** switch that scopes every chart under it: active
-people per day (the headline is the busiest day), sign-ins per day (the total),
-new accounts per day, and videos played per day with the accounts behind them.
+people per day (the headline is the busiest day), then sign-ins, new accounts,
+and videos played per day with the accounts behind them (each headline is the
+total over the window, not a daily figure).
 
 Days with nothing are drawn as gaps rather than skipped: a chart built only from
 the days that have rows draws a quiet week as a continuous line and

@@ -149,6 +149,13 @@ describe("statsOverview", () => {
 		);
 		putRecord("u1", "progress", progress("tt3", 1_800_000, 0), NOW - 9 * DAY);
 		putRecord("u1", "history", { contentId: "tt1", title: "One" }, NOW - DAY);
+		// Marked as watched: neither a play nor watch time.
+		putRecord(
+			"u1",
+			"progress",
+			progress("tt4", 3_600_000, 3_600_000),
+			NOW - DAY,
+		);
 
 		const stats = statsOverview(db, NOW);
 		expect(stats.plays).toEqual({ current: 2, previous: 1 });
@@ -183,6 +190,16 @@ describe("playsPerDay", () => {
 		putRecord("u2", "history", { contentId: "tt1" }, NOW);
 		expect(playsPerDay(db, 1, NOW)).toEqual([
 			{ day: "2026-09-17", value: 3, people: 2 },
+		]);
+	});
+
+	it("leaves out episodes marked as watched", () => {
+		createUserData();
+		putRecord("u1", "progress", progress("tt1", 1, 2), NOW);
+		putRecord("u1", "progress", progress("tt2", 60_000, 60_000), NOW);
+		putRecord("u2", "progress", progress("tt3", 60_000, 60_000), NOW);
+		expect(playsPerDay(db, 1, NOW)).toEqual([
+			{ day: "2026-09-17", value: 1, people: 1 },
 		]);
 	});
 });
