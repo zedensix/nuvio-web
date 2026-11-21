@@ -7,7 +7,7 @@
       "dependencies": {
         "@mediabunny/ac3": "1.61.1",
         "@mediabunny/dts": "1.61.0",
-        "@sentry/browser": "11.12.0",
+        "@sentry/browser": "11.16.0",
         "hls.js": "1.7.3",
         "mediabunny": "1.61.0",
         "nodemailer": "10.3.1",
@@ -292,19 +292,19 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
-    "@sentry/browser": ["@sentry/browser@11.12.0", "", { "dependencies": { "@sentry/browser-utils": "11.12.0", "@sentry/conventions": "^0.32.0", "@sentry/core": "11.12.0", "@sentry/feedback": "11.12.0", "@sentry/replay": "11.12.0", "@sentry/replay-canvas": "11.12.0" } }, "sha512-oiSs0ZZQGVLVLASxTk/Z+MW4cGOHhC65IKc3B//M54eaZEa4p6JqP2DM++ta4IqDQx8+lSD6+TglAIsHBdSyVQ=="],
+    "@sentry/browser": ["@sentry/browser@11.16.0", "", { "dependencies": { "@sentry/browser-utils": "11.16.0", "@sentry/conventions": "^0.34.0", "@sentry/core": "11.16.0", "@sentry/feedback": "11.16.0", "@sentry/replay": "11.16.0", "@sentry/replay-canvas": "11.16.0" } }, "sha512-pl6Q4PGOiEebtr8aOyjslgmSoI5dG9VtGZZwPxApryydy/ravsdD0UxfQ/OSiOBRm1nUv106uxd6haypSGWc4w=="],
 
-    "@sentry/browser-utils": ["@sentry/browser-utils@11.12.0", "", { "dependencies": { "@sentry/conventions": "^0.32.0", "@sentry/core": "11.12.0", "web-vitals": "^6.2.3" } }, "sha512-OttAHqf557R1gfLQRqb/dpGUK1UQd21qkeeN0KA/ThuymYXTNY+qTpJIOqmzgpk6fOmE922mTT6xmnMEiGYZBQ=="],
+    "@sentry/browser-utils": ["@sentry/browser-utils@11.16.0", "", { "dependencies": { "@sentry/conventions": "^0.34.0", "@sentry/core": "11.16.0", "web-vitals": "^6.2.3" } }, "sha512-MUTnIZ7LjLEsx5br+xQsoybztbN1cV3bEXp6AEf/Pawz1avUb07J9nKuOyMVPWksqDpoIIkFJ8GyQvxllWQ+7Q=="],
 
-    "@sentry/conventions": ["@sentry/conventions@0.32.0", "", {}, "sha512-WkSQcDhUUsz1SwxR23LpmyPKba+dgxxiH0DWV4VSM9yaAvhhl87ppW2Ts3g4piIKCVflc31aJeWy+biUbYfsMQ=="],
+    "@sentry/conventions": ["@sentry/conventions@0.34.0", "", {}, "sha512-sGYLaq/zyRTOCoadW3Z66q6WHp16stnwezGK45B50mGO6QUTl/ttzsPpy+oxZlj2pKARyOohZ1pX9grdpMxo2Q=="],
 
-    "@sentry/core": ["@sentry/core@11.12.0", "", { "dependencies": { "@sentry/conventions": "^0.32.0" } }, "sha512-HKER7EcRpPPgC8mLRe5BzP6njfRYFZ53BFLZxVp1whWbY6lp/b2mvTBk4q6+rKsUFhLhRDsd6jL8y/8ddEWv6A=="],
+    "@sentry/core": ["@sentry/core@11.16.0", "", { "dependencies": { "@sentry/conventions": "^0.34.0" } }, "sha512-hu7gw///rDLwVYKmkAgztXUx0sFkpxG1zDwnuHBYCXqHRaEwzEJ/ntBZfAmLbjOSIsg5dcM07AI09KSicFeXBw=="],
 
-    "@sentry/feedback": ["@sentry/feedback@11.12.0", "", { "dependencies": { "@sentry/core": "11.12.0" } }, "sha512-vYOIeby3tVoKZ/q70D1NJ48D4APMVcojyvCjlaZkFOQR6DIEsOjF/uC9MkhnCP3cpa4oADdMatsIpkhlPM+qng=="],
+    "@sentry/feedback": ["@sentry/feedback@11.16.0", "", { "dependencies": { "@sentry/core": "11.16.0" } }, "sha512-0+p7DRQqCLrqHG/PWOCSfSKJGJQUeRqm00pijJSI431Jkm0GEGoCWeLBpr4zdb0KQ+D1Ybof+cjkByA7Jqp2ig=="],
 
-    "@sentry/replay": ["@sentry/replay@11.12.0", "", { "dependencies": { "@sentry/browser-utils": "11.12.0", "@sentry/core": "11.12.0" } }, "sha512-SF1064TKmOvIQTKo8WelVB34IZWtYtrflInsydPeB9jMTpy2iE3LqKRizDJr3YivjMUPDgIGn67b+0kaxiwQ4g=="],
+    "@sentry/replay": ["@sentry/replay@11.16.0", "", { "dependencies": { "@sentry/browser-utils": "11.16.0", "@sentry/core": "11.16.0" } }, "sha512-oDdQjitHHhPcGXTOLWOaQAY1wsCiWVr2SELFQpxs4EZgb3o+uLGWq3DivpJOBjSH5njN13AQu9SMRBtGOjlgOw=="],
 
-    "@sentry/replay-canvas": ["@sentry/replay-canvas@11.12.0", "", { "dependencies": { "@sentry/core": "11.12.0", "@sentry/replay": "11.12.0" } }, "sha512-kx9Q3TY8pMp0b12fpcR0tziGoEW7Z8PpFKncmzD9XYWE3YzMt//B+cjkR+vmmZSUVxOuQATYDFp9c1jRTnbrug=="],
+    "@sentry/replay-canvas": ["@sentry/replay-canvas@11.16.0", "", { "dependencies": { "@sentry/core": "11.16.0", "@sentry/replay": "11.16.0" } }, "sha512-EIdOIKKQO6TpqgPF4Sj6+Pu3b3uArti3101o4LCw1fOIoeVSH/6UpE4nkh0LfBw5Ri2A+inYuSAeoyjjI5JPOg=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.31.30", "", {}, "sha512-MGsM7bVmHg3sUKCphlu3SGQ+T+5JTbygZWYArfKQCW5anJeACHeqLhcnf+R7XlCWZ+QR3C8JTBx3kCKJTN69ow=="],
 
