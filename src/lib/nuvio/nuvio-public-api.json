@@ -2,7 +2,7 @@
 	"openapi": "3.1.0",
 	"x-generated-by": "scripts/build-nuvio-spec.ts",
 	"info": {
-		"title": "Nuvio public API",
+		"title": "Nuvio Server API",
 		"version": "1.3",
 		"description": "The Nuvio API gives third-party clients public REST and RPC endpoints for working with Nuvio user data. Its Supabase-compatible interface supports authenticated operations for profiles, addons, library, watch progress, watch history, collections, and profile settings."
 	},

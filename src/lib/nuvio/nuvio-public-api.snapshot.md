@@ -1,4 +1,4 @@
-# Nuvio public API
+# Nuvio Server API
 
 > **Version:** 1.3 &middot; **Last updated:** August 20, 2026
 > **Base URL:** `https://api.nuvio.tv`
