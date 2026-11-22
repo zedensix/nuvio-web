@@ -39,19 +39,19 @@ test("skip intro button seeks past the intro window", async ({ page }) => {
 	expect(errors, "runtime errors").toEqual([]);
 });
 
-test("reaching the outro fires the handoff and minimizes the player", async ({
+test("playing into the outro fires the handoff, and the tile restores", async ({
 	page,
 }) => {
 	const errors = collectRuntimeErrors(page);
 
-	await page.goto(`/dev/player?src=${SAMPLE}&outroStart=3`);
+	await page.goto(`/dev/player?src=${SAMPLE}&outroStart=6`);
 	await page.waitForLoadState("networkidle");
 
 	await page.evaluate(() => {
 		const v = document.querySelector("video");
 		if (v) {
+			v.currentTime = 5;
 			void v.play().catch(() => {});
-			v.currentTime = 4;
 		}
 	});
 
@@ -59,10 +59,31 @@ test("reaching the outro fires the handoff and minimizes the player", async ({
 		timeout: 5000,
 	});
 	// Minimized: the player region shrinks to a fixed box in the top-left corner.
-	await expect(page.getByRole("region", { name: "Video player" })).toHaveClass(
-		/fixed.*top-4.*left-4/,
-		{ timeout: 3000 },
-	);
+	const region = page.getByRole("region", { name: "Video player" });
+	await expect(region).toHaveClass(/fixed.*top-4.*left-4/, { timeout: 3000 });
+
+	await page.getByRole("button", { name: "Back to video" }).click();
+	await expect(region).not.toHaveClass(/fixed/);
+
+	expect(errors, "runtime errors").toEqual([]);
+});
+
+test("seeking into the outro doesn't fire the handoff", async ({ page }) => {
+	const errors = collectRuntimeErrors(page);
+
+	await page.goto(`/dev/player?src=${SAMPLE}&outroStart=6`);
+	await page.waitForLoadState("networkidle");
+
+	await page.evaluate(() => {
+		const v = document.querySelector("video");
+		if (v) {
+			void v.play().catch(() => {});
+			v.currentTime = 6.5;
+		}
+	});
+
+	await page.waitForTimeout(800);
+	await expect(page.getByTestId("outro")).toHaveText("");
 
 	expect(errors, "runtime errors").toEqual([]);
 });

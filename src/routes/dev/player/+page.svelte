@@ -145,6 +145,7 @@
     {introEnd}
     {outroStart}
     minimized={minimized || endOfShow}
+    onRestore={() => (minimized = false)}
     {info}
     detailHref="/detail/movie/tt0111161"
     onProgress={(position, duration) => (lastProgress = { position, duration })}

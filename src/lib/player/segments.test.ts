@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	animeLookup,
 	aniSkipUrl,
+	crossedIntoCredits,
 	type IntroDbMedia,
 	normalizeAniSkip,
 	normalizeSegments,
@@ -211,5 +212,37 @@ describe("normalizeAniSkip", () => {
 			intro: null,
 			credits: null,
 		});
+	});
+});
+
+describe("crossedIntoCredits", () => {
+	const duration = 6000;
+
+	it("fires when playback runs past the credits start", () => {
+		expect(crossedIntoCredits(5499.8, 5500.1, 5500, duration)).toBe(true);
+	});
+
+	it("ignores a seek or resume that lands in the credits", () => {
+		expect(crossedIntoCredits(3000, 5600, 5500, duration)).toBe(false);
+		expect(crossedIntoCredits(0, 5600, 5500, duration)).toBe(false);
+	});
+
+	it("ignores ticks already inside the credits", () => {
+		expect(crossedIntoCredits(5600, 5600.3, 5500, duration)).toBe(false);
+	});
+
+	it("distrusts credits timed early in the runtime", () => {
+		expect(crossedIntoCredits(2999.8, 3000.1, 3000, duration)).toBe(false);
+	});
+
+	it("leaves the last half second to the ended event", () => {
+		expect(crossedIntoCredits(5999.4, 5999.7, 5999.6, duration)).toBe(false);
+	});
+
+	it("waits for a finite duration", () => {
+		expect(crossedIntoCredits(99.8, 100.1, 100, 0)).toBe(false);
+		expect(crossedIntoCredits(99.8, 100.1, 100, Number.POSITIVE_INFINITY)).toBe(
+			false,
+		);
 	});
 });

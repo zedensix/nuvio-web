@@ -538,15 +538,13 @@
 	}
 
 	// True once the video element actually fired `ended` (vs. just crossing the
-	// outro timestamp mid-credits) : gates the "Back to video" affordance.
+	// outro timestamp mid-credits) : "Back to video" then won't `play()`, which restarts.
 	let trueEnd = $state(false);
 
 	// Fired once when playback reaches the credits, and again on the real `ended`
 	// event as a fallback (when there's no outro timestamp).
 	function reachedEnd(ended = false) {
-		if (ended) {
-			trueEnd = true;
-		}
+		trueEnd = ended;
 		if (context.next && !ended && theme.current.autoSkipSegments) {
 			goToNext();
 		} else if (context.next) {
@@ -568,7 +566,9 @@
 	function backToVideo() {
 		endOfShow = false;
 		cancelUpNext();
-		queueMicrotask(() => void document.querySelector("video")?.play());
+		if (!trueEnd) {
+			queueMicrotask(() => void document.querySelector("video")?.play());
+		}
 	}
 
 	function watchAgain() {
@@ -750,7 +750,7 @@
         {suggestions}
         onBack={goBack}
         onWatchAgain={watchAgain}
-        onResume={trueEnd ? undefined : backToVideo}
+        onResume={backToVideo}
         upcoming={upcomingStream.current}
       />
     {/if}
@@ -800,6 +800,7 @@
         introEnd={segments?.intro?.end ?? null}
         outroStart={segments?.credits?.start ?? null}
         minimized={endOfShow}
+        onRestore={backToVideo}
         onProgress={progressReporter()}
         onEnded={() => reachedEnd(true)}
         onUnplayable={mpv.available ? mpv.play : undefined}

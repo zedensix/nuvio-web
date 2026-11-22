@@ -82,6 +82,8 @@ export interface VideoPlayerProps {
 	outroStart?: number | null;
 	/** Shrink to a corner PiP (the page's end-of-show takeover). */
 	minimized?: boolean;
+	/** Clicking the minimized player brings it back full size. */
+	onRestore?: () => void;
 	/**
 	 * One of the page's own drawers (sources, episodes) is covering the player.
 	 * Keeps the pause-triggered info overlay from opening on top of it, where it

@@ -119,6 +119,31 @@ export function normalizeSegments(media: IntroDbMedia | null): MediaSegments {
 	return { intro, credits };
 }
 
+/** Longest step between two time updates that still counts as playback, not a seek. */
+const MAX_PLAYBACK_STEP = 3;
+/** Credits timed against another cut can land mid-film: earlier than this share of the runtime is ignored. */
+const MIN_CREDITS_FRACTION = 0.7;
+
+/**
+ * Whether playback just ran into the credits. A seek or a resume that lands
+ * past `creditsStart` doesn't count: the viewer chose to be there.
+ */
+export function crossedIntoCredits(
+	previous: number,
+	time: number,
+	creditsStart: number,
+	duration: number,
+): boolean {
+	return (
+		Number.isFinite(duration) &&
+		creditsStart >= duration * MIN_CREDITS_FRACTION &&
+		previous < creditsStart &&
+		time >= creditsStart &&
+		time - previous <= MAX_PLAYBACK_STEP &&
+		time < duration - 0.5
+	);
+}
+
 // -- AniSkip -------------------------------------------------------------------
 //
 // TheIntroDB is thin on anime; AniSkip (https://aniskip.com) is the community

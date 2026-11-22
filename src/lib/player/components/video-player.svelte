@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
+	import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
 	import { untrack } from "svelte";
 	import { toast } from "svelte-sonner";
 	import { m } from "#lib/i18n/index.js";
@@ -67,6 +68,7 @@
 		introEnd = null,
 		outroStart = null,
 		minimized = false,
+		onRestore,
 		drawerOpen = false,
 		onProgress,
 		onEnded,
@@ -620,6 +622,18 @@
 
   <ShortcutsDialog bind:open={shortcutsOpen} />
 
+  {#if minimized && onRestore}
+    <button
+      type="button"
+      onclick={onRestore}
+      aria-label={m.player_back_to_video()}
+      class="group/restore absolute inset-0 z-40 flex items-center justify-center bg-black/0 transition hover:bg-black/40 focus-visible:bg-black/40 focus-visible:outline-none"
+    >
+      <Maximize2Icon
+        class="size-8 text-white opacity-0 drop-shadow transition group-hover/restore:opacity-100 group-focus-visible/restore:opacity-100"
+      />
+    </button>
+  {/if}
 </div>
 
 <style>

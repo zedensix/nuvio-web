@@ -1,9 +1,10 @@
+import { crossedIntoCredits } from "#lib/player/segments.js";
 import type { PlayerTransportState } from "./transport-state.svelte.ts";
 
 /**
  * The two "react to a position in the timeline" concerns: showing (and
  * acting on) "Skip intro" while inside the intro window, and firing
- * `onOutro` once as playback crosses into the credits.
+ * `onOutro` each time playback runs into the credits.
  */
 export function createPlaybackMilestones(deps: {
 	transport: PlayerTransportState;
@@ -17,7 +18,7 @@ export function createPlaybackMilestones(deps: {
 	autoSkip: () => boolean;
 	onOutro?: () => void;
 }) {
-	let outroFired = false;
+	let lastTime: number | null = null;
 	let introSkipped = false;
 
 	const showSkipIntro = $derived(
@@ -49,24 +50,23 @@ export function createPlaybackMilestones(deps: {
 		}
 	});
 
-	// Fire `onOutro` once as playback crosses into the credits.
+	// Fire `onOutro` each time playback runs into the credits.
 	$effect(() => {
+		const time = deps.transport.currentTime;
+		const previous = lastTime;
+		lastTime = time;
 		const outroStart = deps.outroStart();
 		if (
-			!outroFired &&
+			previous !== null &&
 			outroStart != null &&
-			deps.transport.duration > 0 &&
-			deps.transport.currentTime >= outroStart &&
-			deps.transport.currentTime < deps.transport.duration - 0.5
+			crossedIntoCredits(previous, time, outroStart, deps.transport.duration)
 		) {
-			outroFired = true;
 			deps.onOutro?.();
 		}
 	});
 
-	// New source: the outro hasn't happened yet on it.
 	function reset() {
-		outroFired = false;
+		lastTime = null;
 		introSkipped = false;
 	}
 
