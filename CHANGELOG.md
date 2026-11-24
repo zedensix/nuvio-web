@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.39](https://github.com/zedensix/nuvio-web/compare/v1.0.38...v1.0.39) (2026-11-24)
+
+### Features
+
+* **player:** up-next card with countdown setting, and pick a stream from an episode's menu ([1791df1](https://github.com/zedensix/nuvio-web/commit/1791df1b2bed779baf88ac1c8898e1e8c23791bc))
+
+### Bug Fixes
+
+* **player:** restore the minimized player and only fire the outro on play-through ([3ef4e7b](https://github.com/zedensix/nuvio-web/commit/3ef4e7bc353174cdfceef18c754c2eea4afdfcf5))
+* **deps:** update minor and patch updates (#76) ([4528f1a](https://github.com/zedensix/nuvio-web/commit/4528f1a56e80a4bbbca669072f31293e49297d3f))
+
 ## [1.0.38](https://github.com/zedensix/nuvio-web/compare/v1.0.37...v1.0.38) (2026-11-19)
 
 ### Bug Fixes
