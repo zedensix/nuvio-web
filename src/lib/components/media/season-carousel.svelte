@@ -3,6 +3,7 @@
 	import EyeIcon from "@lucide/svelte/icons/eye";
 	import EyeOffIcon from "@lucide/svelte/icons/eye-off";
 	import ListChecksIcon from "@lucide/svelte/icons/list-checks";
+	import ListVideoIcon from "@lucide/svelte/icons/list-video";
 	import PlayIcon from "@lucide/svelte/icons/play";
 	import TvIcon from "@lucide/svelte/icons/tv";
 	import type { MetaVideo } from "#lib/addons/index.js";
@@ -23,6 +24,7 @@
 		onToggleWatched,
 		onMarkUpTo,
 		onMarkSeason,
+		onSelectStream,
 	}: {
 		videos: MetaVideo[];
 		seriesRuntime?: string | null;
@@ -41,6 +43,8 @@
 		onMarkUpTo?: (videoId: string) => void;
 		/** Mark a whole season (optionally plus every earlier season) watched. */
 		onMarkSeason?: (season: number, includeEarlier: boolean) => void;
+		/** Open the source drawer for this episode instead of auto-picking one. */
+		onSelectStream?: (videoId: string) => void;
 	} = $props();
 
 	const grouped = $derived.by(() => {
@@ -129,19 +133,27 @@
 		episode: { id: string; season?: number; episode?: number },
 		completed: boolean,
 	): MenuAction[] {
-		const actions: MenuAction[] = [
-			{
-				label: completed ? m.common_mark_unwatched() : m.common_mark_watched(),
-				icon: completed ? EyeOffIcon : EyeIcon,
-				onSelect: () =>
-					onToggleWatched(
-						episode.id,
-						episode.season ?? null,
-						episode.episode ?? null,
-						completed,
-					),
-			},
-		];
+		const actions: MenuAction[] = [];
+		if (onSelectStream) {
+			const selectStream = onSelectStream;
+			actions.push({
+				label: m.watch_detail_select_stream(),
+				icon: ListVideoIcon,
+				onSelect: () => selectStream(episode.id),
+			});
+		}
+		actions.push({
+			label: completed ? m.common_mark_unwatched() : m.common_mark_watched(),
+			icon: completed ? EyeOffIcon : EyeIcon,
+			onSelect: () =>
+				onToggleWatched(
+					episode.id,
+					episode.season ?? null,
+					episode.episode ?? null,
+					completed,
+				),
+			separator: Boolean(onSelectStream),
+		});
 		if (onMarkUpTo) {
 			const markUpTo = onMarkUpTo;
 			actions.push({

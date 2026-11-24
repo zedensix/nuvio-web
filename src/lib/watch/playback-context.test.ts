@@ -135,7 +135,10 @@ describe("nextCard", () => {
 		const ordered = playOrder(seriesMeta.videos);
 		expect(nextCard(ordered, 1, 1)).toEqual({
 			videoId: "tt0411008:1:2",
-			label: "S1E2 · Pilot, Part 2",
+			season: 1,
+			episode: 2,
+			title: "Pilot, Part 2",
+			overview: null,
 			thumbnail: null,
 		});
 	});

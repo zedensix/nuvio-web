@@ -32,3 +32,30 @@ test("detail: clicking an episode card opens the player", async ({
 	await page.waitForTimeout(1000);
 	expect(errors, "runtime errors").toEqual([]);
 });
+
+test("detail: right-clicking an episode opens its source drawer", async ({
+	page,
+	context,
+}) => {
+	await signIn(context);
+	const errors = collectRuntimeErrors(page);
+
+	await page.goto("/detail/series/tt0903747");
+	await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
+
+	const seasonOne = page.getByRole("button", { name: "Season 1", exact: true });
+	await expect(seasonOne).toBeVisible({ timeout: 20_000 });
+	await seasonOne.click();
+
+	await page
+		.getByRole("link", { name: /^E2\b/ })
+		.first()
+		.click({ button: "right" });
+	await page.getByRole("menuitem", { name: "Select stream" }).click();
+
+	await expect(page.getByRole("dialog", { name: "Sources" })).toBeVisible();
+	await expect(page).toHaveURL(/\/detail\/series\/tt0903747/);
+
+	await page.waitForTimeout(1000);
+	expect(errors, "runtime errors").toEqual([]);
+});

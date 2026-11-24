@@ -78,11 +78,15 @@ export const WATCH_REGIONS = [
 ] as const;
 export type WatchRegion = (typeof WATCH_REGIONS)[number];
 
+export const UP_NEXT_SECONDS = [5, 10, 15, 30] as const;
+
 export const uiSettingsSchema = v.object({
 	mode: v.fallback(v.picklist(["light", "dark", "system"]), "system"),
 	darkStyle: v.fallback(v.picklist(["dim", "amoled"]), "dim"),
 	accent: v.fallback(v.picklist(ACCENTS), "blue"),
 	autoPlayNext: v.fallback(v.boolean(), true),
+	/** How long the up-next card counts down before playing the next episode. */
+	upNextSeconds: v.fallback(v.picklist(UP_NEXT_SECONDS), 10),
 	/** Skip the intro, and the credits to the next episode, when segment data has them. */
 	autoSkipSegments: v.fallback(v.boolean(), false),
 	/** Phone / tablet player gestures : double-tap seek, hold for 2x, swipe for
@@ -131,6 +135,7 @@ export const DEFAULT_UI_SETTINGS: UiSettings = {
 	darkStyle: "dim",
 	accent: "blue",
 	autoPlayNext: true,
+	upNextSeconds: 10,
 	autoSkipSegments: false,
 	touchGestures: true,
 	preferredQuality: "auto",

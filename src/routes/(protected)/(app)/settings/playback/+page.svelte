@@ -15,6 +15,7 @@
 		STREAM_QUALITIES,
 		SUBTITLE_COLORS,
 		type UiSettings,
+		UP_NEXT_SECONDS,
 		WATCH_REGIONS,
 	} from "#lib/settings/ui-settings.js";
 	import { cn } from "#lib/utils.js";
@@ -129,6 +130,29 @@
         checked={theme.current.autoPlayNext}
         onCheckedChange={(value) => update({ autoPlayNext: value })}
       />
+    </SettingsRow>
+    <SettingsRow
+      label={m.settings_up_next_delay()}
+      labelId="up-next-delay-label"
+      hint={m.settings_up_next_delay_hint()}
+    >
+      <Select.Root
+        type="single"
+        value={String(theme.current.upNextSeconds)}
+        disabled={!theme.current.autoPlayNext}
+        onValueChange={(value) =>
+          update({ upNextSeconds: Number(value) as UiSettings["upNextSeconds"] })}
+      >
+        <Select.Trigger aria-labelledby="up-next-delay-label" class="w-full">
+          {m.settings_up_next_seconds({ seconds: theme.current.upNextSeconds })}
+        </Select.Trigger>
+        <Select.Content>
+          {#each UP_NEXT_SECONDS as option (option)}
+            {@const label = m.settings_up_next_seconds({ seconds: option })}
+            <Select.Item value={String(option)} {label}>{label}</Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
     </SettingsRow>
     <SettingsRow
       inline

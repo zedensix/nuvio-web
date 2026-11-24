@@ -20,6 +20,7 @@
 	import PlayerEpisodesPanel from "#lib/player/components/episodes-panel.svelte";
 	import MpvScreen from "#lib/player/components/mpv-screen.svelte";
 	import PlaybackLoading from "#lib/player/components/playback-loading.svelte";
+	import UpNextCard from "#lib/player/components/up-next-card.svelte";
 	import VideoPlayer from "#lib/player/components/video-player.svelte";
 	import { mpvSubtitles } from "#lib/player/desktop-mpv.js";
 	import {
@@ -488,8 +489,6 @@
 	// Two end states: "up next" (there is a next episode) and "end of show"
 	// (there isn't : shrink the player, show suggestions).
 	let upNextVisible = $state(false);
-	let upNextCountdown = $state<number | null>(null);
-	let countdownTimer: ReturnType<typeof setInterval> | undefined;
 	let endOfShow = $state(false);
 
 	const suggestionsQuery = $derived(
@@ -507,8 +506,6 @@
 	);
 
 	function cancelUpNext() {
-		clearInterval(countdownTimer);
-		upNextCountdown = null;
 		upNextVisible = false;
 	}
 
@@ -522,18 +519,8 @@
 	}
 
 	function openUpNext() {
-		if (!context.next || upNextVisible) {
-			return;
-		}
-		upNextVisible = true;
-		if (theme.current.autoPlayNext) {
-			upNextCountdown = 10;
-			countdownTimer = setInterval(() => {
-				upNextCountdown = (upNextCountdown ?? 1) - 1;
-				if (upNextCountdown <= 0) {
-					goToNext();
-				}
-			}, 1000);
+		if (context.next) {
+			upNextVisible = true;
 		}
 	}
 
@@ -814,35 +801,12 @@
     {/key}
 
     {#if upNextVisible && context.next}
-      {@const upNext = context.next}
-      <div
-        class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-black/85 p-6 text-center backdrop-blur-sm"
-      >
-        <p
-          class="text-xs font-semibold tracking-[0.2em] text-white/60 uppercase"
-        >
-          {m.watch_up_next()}
-        </p>
-        {#if upNext.thumbnail}
-          <img
-            src={upNext.thumbnail}
-            alt=""
-            class="aspect-video w-56 rounded-lg object-cover ring-1 ring-white/15"
-          />
-        {/if}
-        <p class="max-w-md text-sm font-medium">{upNext.label}</p>
-        <div class="flex items-center gap-2">
-          <Button size="lg" onclick={goToNext}>
-            <PlayIcon data-icon="inline-start" class="fill-current" />
-            {upNextCountdown != null && upNextCountdown > 0
-              ? m.watch_play_now_countdown({ seconds: upNextCountdown })
-              : m.watch_play_next_episode()}
-          </Button>
-          <Button size="lg" variant="secondary" onclick={cancelUpNext}>
-            {m.watch_not_now()}
-          </Button>
-        </div>
-      </div>
+      <UpNextCard
+        next={context.next}
+        seconds={theme.current.autoPlayNext ? theme.current.upNextSeconds : null}
+        onNext={goToNext}
+        onDismiss={cancelUpNext}
+      />
     {/if}
   {:else if debrid.waiting}
     <PlaybackLoading

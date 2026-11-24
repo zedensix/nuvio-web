@@ -677,6 +677,7 @@
                     onToggleWatched={toggleWatched}
                     onMarkUpTo={markUpTo}
                     onMarkSeason={markSeason}
+                    onSelectStream={selectStream}
                 />
             {/if}
 

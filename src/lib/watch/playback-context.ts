@@ -400,7 +400,10 @@ export function nextCard(
 	return candidate && isAired(candidate.released, now)
 		? {
 				videoId: candidate.id,
-				label: `S${candidate.season}E${candidate.episode} · ${candidate.title}`,
+				season: candidate.season ?? 0,
+				episode: candidate.episode ?? 0,
+				title: candidate.title,
+				overview: candidate.overview ?? null,
 				thumbnail: candidate.thumbnail ?? null,
 			}
 		: null;

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import PlayerEndPanel from "#lib/player/components/end-panel.svelte";
+	import UpNextCard from "#lib/player/components/up-next-card.svelte";
 	import VideoPlayer from "#lib/player/components/video-player.svelte";
 	import { page } from "$app/state";
 
@@ -112,6 +113,12 @@
 	let ended = $state(false);
 	let outro = $state(false);
 	let minimized = $state(false);
+
+	// `?upnext=<seconds>` shows the up-next card counting down from that many
+	// seconds (`0` : autoplay off, no countdown).
+	const upNextParam = $derived(numParam("upnext"));
+	let upNextOpen = $state(true);
+	let nextPlayed = $state(false);
 </script>
 
 <div
@@ -163,4 +170,22 @@
   </p>
   <p data-testid="ended">{ended ? "ended" : ""}</p>
   <p data-testid="outro">{outro ? "outro" : ""}</p>
+  <p data-testid="next-played">{nextPlayed ? "next" : ""}</p>
+  {#if upNextParam !== null && upNextOpen}
+    <UpNextCard
+      next={{
+        season: 1,
+        episode: 2,
+        title: "The Harness Strikes Back",
+        overview: "A dev-only episode summary, long enough to wrap onto a second line in the card.",
+        thumbnail: null,
+      }}
+      seconds={upNextParam > 0 ? upNextParam : null}
+      onNext={() => {
+        nextPlayed = true;
+        upNextOpen = false;
+      }}
+      onDismiss={() => (upNextOpen = false)}
+    />
+  {/if}
 </div>
