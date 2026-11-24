@@ -116,6 +116,17 @@ test("built-in backend: the admin switches to it and a new user signs up and sav
 		.click();
 	await expect(page).not.toHaveURL(/\/profiles/, { timeout: 15_000 });
 
+	// A saved edit closes its dialog: the save redirects back to the same page.
+	await page.goto("/profiles");
+	await page.getByRole("button", { name: "Manage profiles" }).click();
+	await page.getByRole("button", { name: "Edit Built-in" }).click();
+	await page.getByRole("dialog").getByLabel("Name").fill("Built-in edited");
+	await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+	await expect(page.getByRole("dialog")).toBeHidden({ timeout: 15_000 });
+	await expect(
+		page.getByText("Built-in edited", { exact: true }),
+	).toBeVisible();
+
 	// A new account has no addons: install the showcase one the way a user does.
 	await page.goto("/settings/addons");
 	await page.getByRole("button", { name: "Add addon" }).first().click();

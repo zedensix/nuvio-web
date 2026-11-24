@@ -16,6 +16,7 @@
 	import { m } from "#lib/i18n/index.js";
 	import type { ProfileView } from "#lib/nuvio/profile.js";
 	import { cn } from "#lib/utils.js";
+	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/state";
 	import { signOut } from "../../auth/auth.remote.ts";
 	import {
@@ -80,6 +81,12 @@
 	let manage = $state(false);
 	let editing = $state<ProfileView | null>(null);
 	let deleteConfirmOpen = $state(false);
+
+	// A save or delete redirects back here, which keeps this component (and its open dialogs) alive.
+	afterNavigate(() => {
+		editing = null;
+		deleteConfirmOpen = false;
+	});
 	let editName = $state("");
 	let editColor = $state("#2563EB");
 	let editAvatarId = $state<string | undefined>(undefined);

@@ -63,17 +63,15 @@
       language first, ten at most; whether the engine selects one on its own is
       unknown). Not built: an Intel build for macOS 14. Untested: Windows
       named-pipe IPC.
-- [ ] **Custom backends: confirm against a real self-hosted backend.** Only
-      unit-tested against fakes. Check sign-in, sign-up (with and without email
-      confirmation), token refresh and the background sync against a real
-      self-hosted Supabase running the Nuvio schema: the RPC names, the
-      `/auth/v1/settings` probe behind **Test connection**, avatar storage URLs,
-      and whether a backend behind a redirect still works (redirects are
-      re-checked and re-sent with the same method and body). Also confirm a LAN
-      default (`http://192.168.…`) from inside the container, and run
-      `e2e/custom-backend.spec.ts` passes. Also an empty key against a real
-      `NuvioMedia/self-host` deployment: the key comes from its
-      `/.well-known/nuvio` (unit-tested against fakes only).
+- [ ] **Custom backends: email confirmation on a real self-hosted backend.** Run
+      against a local `NuvioMedia/self-host` (local mode, GoTrue 2.189) reached
+      at a LAN address (`http://192.168.…`) from inside the container, with an
+      empty key read from its `/.well-known/nuvio` (a legacy anon JWT): sign-in,
+      sign-up through the app, a profile and its avatar, a library write
+      mirrored by the background sync, a token refresh past a 60 s JWT, **Test
+      connection**, and the same flows through a 308 redirect all work.
+      `e2e/custom-backend.spec.ts` passes. Untried: sign-up with confirmation
+      required, since local mode runs no mail service.
 - [ ] **Built-in backend: try real clients, check the proxy.** `/api/nuvio` is
       contract-tested with the app's own `NuvioClient` in-process, and
       `e2e/built-in-backend.spec.ts` passes. Point the official Nuvio mobile/TV
