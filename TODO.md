@@ -82,18 +82,24 @@
       `Authorization: Bearer <publishable key>` as anonymous). Confirm another
       instance reaching it over HTTP behind a reverse proxy (the instance's own
       default never self-calls: it routes in-process), and that `ORIGIN` gives
-      the card the public URL there. Password reset (`/recover`, `/verify`,
-      `PUT /user`), optional email confirmation, account deletion
-      (`DELETE /user`) and the 10 s refresh-reuse grace are unit-tested only:
-      send a real reset and confirmation email through SMTP and follow the
-      links, check that a supabase-js `verifyOtp({ type, token_hash })` and
-      `updateUser({ password })` work against it. `e2e/built-in-backend.spec.ts`
-      covers deletion and the Forgot password page.
-- [ ] **Admin SMTP and dashboard: a real send, a phone, an ultrawide.**
-      `e2e/admin.spec.ts`, `e2e/admin-activity.spec.ts` and the admin pages of
-      `a11y.spec.ts` pass. Send a real test email (STARTTLS on 587 and implicit
-      TLS on 465) from the compiled image, and check the dashboard on a phone
-      and on an ultrawide screen.
+      the card the public URL there. Account deletion (`DELETE /user`) is
+      unit-tested only. supabase-js 2 was run against the compiled image with
+      SMTP to Mailpit: sign-up with and without confirmation, password sign-in
+      and its `AuthApiError` codes, refresh rotation, the 10 s reuse grace (and
+      the family revoked after it, as `session_not_found`),
+      `resetPasswordForEmail` then `verifyOtp({ type: "recovery", token_hash })`
+      from the emailed link, `updateUser({ password })`, and
+      `verifyOtp({ type: "signup" })`. Still untried: a real mail provider, and
+      the emailed links opened in a browser through the reset / confirm pages.
+      `e2e/built-in-backend.spec.ts` covers deletion and the Forgot password
+      page.
+- [ ] **Admin SMTP and dashboard: a real provider, a real phone.** STARTTLS on
+      587 and implicit TLS on 465 both send from the compiled image (to Mailpit
+      behind a test CA, certificate checked); a real provider's auth is untried.
+      The dashboard has no page scroll or console error at 390, 1440 and 3440 px
+      in Playwright. On a phone the tab strip scrolls but clips right at the
+      Notifications edge, so Settings (SMTP) shows no hint that it's there:
+      decide whether it wraps or becomes nav cards.
 - [ ] **Mobile shell: verify on real phones.** Bottom tab bar, search-pill
       header, grouped settings list, two-column profile picker, safe-area insets
       (`viewport-fit=cover`) and the player's auto fullscreen + landscape lock
@@ -119,10 +125,6 @@
       that the first load after a redeploy no longer asks every addon, that a
       Trakt-style catalog's 10 minutes isn't too stale, and that "reuse last
       link" picks up a link played on another device.
-- [ ] **Browser meta cache: confirm on Discover.** `hooks.server.ts` marks a
-      title page's and Discover's navigation data, plus the addon-meta remote
-      queries, `private, max-age=900`. Seen on a title page's `__data.json`
-      only; Discover goes through the same route check but wasn't observed.
 - [ ] **Addon browse page: try it on a phone.** `e2e/addons-browse.spec.ts` and
       its `a11y.spec.ts` pages pass (against the live Community directory at
       `v3-cinemeta.strem.io`). Check the filter sheet, the details page's
@@ -168,11 +170,16 @@
       staying on the same addon `bingeGroup` are only type-checked and
       unit-tested. Check an Android and an iOS lock screen, and a binge on a
       debrid addon that sets `bingeGroup` (Torrentio does).
-- [ ] **Review the fr / es / de copy.** 650+ strings, written by a model:
-      idiomatic, but nobody who speaks those languages has read them yet.
+- [ ] **Review the fr / es / de copy.** 650+ strings, written by a model and
+      proofread by a second model pass (about 160 keys fixed: grammar, calques,
+      terms aligned). Nobody who speaks those languages has read them yet. Open
+      choices: es reads as Spain Spanish (ordenador, vídeo), not neutral; de
+      writes episodes "S1 F3"; TheIntroDB's key label is built as name + suffix,
+      which reads badly in all three.
 - [ ] **Report Bun's embedded-file `Range` bug, then drop the shim.** Bun's own,
       not adapter-bun's: in a `bun build --compile` binary,
       `new Response(Bun.file(embedded))` answers `Range` with the whole file and
-      a 200 (a file on disk gets its 206). Still there in Bun 1.4.4; the issue
-      text, with a ten-line repro, is drafted and waiting to be posted.
-      `e2e/fixtures.ts` serves the fixtures with `Range` meanwhile.
+      a 200 (a file on disk gets its 206). Still there in Bun 1.4.6-canary, and
+      no upstream issue exists yet; the issue text, with a ten-line repro, is
+      drafted and waiting to be posted. `e2e/fixtures.ts` serves the fixtures
+      with `Range` meanwhile.

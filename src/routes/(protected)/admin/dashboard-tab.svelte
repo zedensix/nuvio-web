@@ -73,7 +73,7 @@
     {@const stats = overviewStream.current}
     <section
       aria-label={m.admin_stats_overview()}
-      class="grid grid-cols-2 gap-3 md:grid-cols-4 2xl:grid-cols-8"
+      class="grid grid-cols-2 gap-3 md:grid-cols-4 2xl:grid-cols-7"
     >
       <StatTile
         icon={UsersIcon}
@@ -127,7 +127,7 @@
   {:else if overviewStream.ready}
     <p class="text-sm text-muted-foreground">{m.shell_couldnt_load()}</p>
   {:else}
-    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 2xl:grid-cols-8" aria-hidden="true">
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 2xl:grid-cols-7" aria-hidden="true">
       {#each { length: 7 }, index (index)}
         <div class="h-24 animate-pulse rounded-xl bg-muted"></div>
       {/each}

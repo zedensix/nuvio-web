@@ -42,7 +42,7 @@ const ATTEMPTS_PER_EMAIL = 5;
 export type Caller =
 	| { kind: "anonymous" }
 	| { kind: "user"; claims: AccessClaims }
-	| { kind: "invalid"; reason: "invalid" | "expired" };
+	| { kind: "invalid"; reason: "invalid" | "expired" | "session" };
 
 /** Where an emailed link lands: absolute URLs of the app's pages. */
 export interface MailLinks {
@@ -206,7 +206,7 @@ export class BackendAuth {
 		const { claims } = verified;
 		return this.accounts.sessionExists(claims.session_id, claims.sub)
 			? { kind: "user", claims }
-			: { kind: "invalid", reason: "invalid" };
+			: { kind: "invalid", reason: "session" };
 	}
 
 	/** For the admin page: an admin's email can't sign up through the API (see `#signUp`). */
@@ -525,11 +525,18 @@ export class BackendAuth {
 		if (caller.kind === "user") {
 			return caller.claims;
 		}
-		return caller.kind === "anonymous"
+		if (caller.kind === "anonymous") {
+			return authError(
+				401,
+				"no_authorization",
+				"This endpoint requires a Bearer token",
+			);
+		}
+		return caller.reason === "session"
 			? authError(
-					401,
-					"no_authorization",
-					"This endpoint requires a Bearer token",
+					403,
+					"session_not_found",
+					"Session from session_id claim in JWT does not exist",
 				)
 			: authError(403, "bad_jwt", `invalid JWT: ${caller.reason} token`);
 	}

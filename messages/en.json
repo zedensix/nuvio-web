@@ -14,7 +14,7 @@
 	"admin_builtin_confirm_off": "Not required",
 	"admin_builtin_confirm_enable": "Require it",
 	"admin_builtin_confirm_disable": "Stop requiring it",
-	"admin_builtin_confirm_needs_mail": "Set up SMTP in Notifications and use the built-in backend as the default first: the links need both.",
+	"admin_builtin_confirm_needs_mail": "Set up SMTP in Settings and use the built-in backend as the default first: the links need both.",
 	"auth_back_to_sign_in": "Back to sign in",
 	"auth_confirm_title": "Confirm your email",
 	"auth_confirm_description": "One click and your account is ready.",
@@ -88,7 +88,7 @@
 	"account_rewatch_episode": "Rewatch episode",
 	"account_section_history_description": "Everything this profile watched",
 	"account_section_overview_description": "Email, password and sign-in",
-	"account_section_stats_description": "Time watched, genres and streaks",
+	"account_section_stats_description": "Time watched and top genres",
 	"account_section_storage_description": "What this server keeps for the profile",
 	"account_sections_label": "Account sections",
 	"account_shows": "Shows",
@@ -870,7 +870,7 @@
 			"declarations": ["input count", "local countPlural = count: plural"],
 			"selectors": ["countPlural"],
 			"match": {
-				"countPlural=one": "{count} catalogs",
+				"countPlural=one": "{count} catalog",
 				"countPlural=other": "{count} catalogs"
 			}
 		}

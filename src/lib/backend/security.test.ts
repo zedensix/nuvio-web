@@ -796,7 +796,10 @@ describe("refresh-token reuse", () => {
 			status: 400,
 			code: "refresh_token_already_used",
 		});
-		await expect(user.getUser()).rejects.toMatchObject({ status: 403 });
+		await expect(user.getUser()).rejects.toMatchObject({
+			status: 403,
+			code: "session_not_found",
+		});
 
 		const other = await signedIn("other@example.com");
 		const spent = other.session?.refresh_token as string;
