@@ -51,9 +51,11 @@
       credits starting up next, next episode and episodes. The commands and the
       `track-list` / `sub-add` shapes were checked against mpv 0.41 (the bundled
       libmpv's version) over IPC; `e2e/desktop-mpv.spec.ts` drives the controls
-      against a faked engine. Not run in the app itself. Still missing: the info
-      overlay, the saved per-title audio track and boost, ASS styling overrides,
-      and any Windows / Linux equivalent. OpenGL is deprecated on macOS.
+      against a faked engine. Not run in the app itself. Playing holds a
+      display-sleep assertion (released on pause, end, close): confirm it shows
+      in `pmset -g assertions` mid-playback. Still missing: the info overlay,
+      the saved per-title audio track and boost, ASS styling overrides, and any
+      Windows / Linux equivalent. OpenGL is deprecated on macOS.
 - [ ] **Desktop mpv fallback: play a real unplayable source.** Bundling (macOS
       arm64) and discovery were run; the hand-off itself wasn't: open a source
       the web view refuses and check mpv opens at the saved position, progress

@@ -10,6 +10,7 @@
 // set and command is async.
 
 #import <Cocoa/Cocoa.h>
+#import <IOKit/pwr_mgt/IOPMLib.h>
 #import <OpenGL/gl3.h>
 #include <math.h>
 #include <mpv/client.h>
@@ -83,6 +84,8 @@ static void on_main(dispatch_block_t block) {
 @property(nonatomic, strong) NuvioMpvView *view;
 // The observed properties' latest values, as mpv reported them.
 @property(nonatomic, strong) NSMutableDictionary<NSString *, id> *values;
+@property(nonatomic) BOOL visible;
+@property(nonatomic) IOPMAssertionID awake;
 @end
 
 static const struct {
@@ -98,6 +101,23 @@ static const struct {
 
 @implementation NuvioMpvPlayer
 @end
+
+// The render API leaves sleep to the host: mpv's stop-screensaver only covers
+// its own window.
+static void keep_awake(NuvioMpvPlayer *player) {
+  BOOL playing = player.visible && ![player.values[@"pause"] boolValue];
+  if (playing && player.awake == kIOPMNullAssertionID) {
+    IOPMAssertionID assertion = kIOPMNullAssertionID;
+    IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep,
+                                kIOPMAssertionLevelOn,
+                                CFSTR("Nuvio Web is playing a video"),
+                                &assertion);
+    player.awake = assertion;
+  } else if (!playing && player.awake != kIOPMNullAssertionID) {
+    IOPMAssertionRelease(player.awake);
+    player.awake = kIOPMNullAssertionID;
+  }
+}
 
 static void on_render_update(void *context) {
   NuvioMpvPlayer *player = (__bridge NuvioMpvPlayer *)context;
@@ -254,6 +274,7 @@ static void remember(NuvioMpvPlayer *player, mpv_event_property *property) {
   } else {
     [player.values removeObjectForKey:name];
   }
+  keep_awake(player);
 }
 
 // Drains mpv's event queue, keeping the observed properties' new values: -1
@@ -283,6 +304,8 @@ int nuvio_mpv_poll_end(void *pointer) {
 
 void nuvio_mpv_set_visible(void *pointer, int visible) {
   NuvioMpvPlayer *player = (__bridge NuvioMpvPlayer *)pointer;
+  player.visible = visible != 0;
+  keep_awake(player);
   on_main(^{
     player.view.hidden = !visible;
   });
@@ -290,6 +313,8 @@ void nuvio_mpv_set_visible(void *pointer, int visible) {
 
 void nuvio_mpv_destroy(void *pointer) {
   NuvioMpvPlayer *player = (__bridge_transfer NuvioMpvPlayer *)pointer;
+  player.visible = NO;
+  keep_awake(player);
   on_main(^{
     [[player.view openGLContext] makeCurrentContext];
     mpv_render_context_free(player.view.render);
