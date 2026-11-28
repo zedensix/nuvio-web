@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.40](https://github.com/zedensix/nuvio-web/compare/v1.0.39...v1.0.40) (2026-11-28)
+
+### Bug Fixes
+
+* **desktop:** keep the display awake while the in-window mpv plays ([b03c977](https://github.com/zedensix/nuvio-web/commit/b03c977c8a192eafc7312f159aebaae0c3b37d6e))
+* **profiles:** close the edit and delete dialogs once a save redirects back ([cb33385](https://github.com/zedensix/nuvio-web/commit/cb33385057aaaa319c1b4fe5db674fb2ad747257))
+* GoTrue session_not_found for revoked sessions, proofread fr/es/de copy, fill the ultrawide stat row ([7080d7b](https://github.com/zedensix/nuvio-web/commit/7080d7b1591f6af769ebe9065e5f9c160b91710b))
+
 ## [1.0.39](https://github.com/zedensix/nuvio-web/compare/v1.0.38...v1.0.39) (2026-11-24)
 
 ### Features
