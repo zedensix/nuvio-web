@@ -19,7 +19,7 @@
         "@inlang/paraglide-js": "3.2.2",
         "@internationalized/date": "3.12.4",
         "@j178/prek": "0.5.10",
-        "@lucide/svelte": "1.81.0",
+        "@lucide/svelte": "1.82.0",
         "@playwright/test": "1.65.1",
         "@sveltejs/adapter-bun": "1.0.1",
         "@sveltejs/kit": "3.2.0",
@@ -196,7 +196,7 @@
 
     "@lix-js/sdk": ["@lix-js/sdk@0.20.1", "", { "dependencies": { "@bytecodealliance/jco-transpile": "0.13.0", "binaryen": "130.0.0", "fflate": "^0.8.3" } }, "sha512-oscOFP8Cr1My6Wh2KVYC9+aJ1mHs+d7vnD+7PPJaA4L+Y1FR37Sm99SrFGfvUizaj/XtRi2GlDF2IOFt9iXMNQ=="],
 
-    "@lucide/svelte": ["@lucide/svelte@1.81.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-q8rljlyKNiZP6oYt4gQkUQQ1K3QsKHS/uCv7TjaRgxW8cY+S9i0+VW32DiH5RTDQgnlZBaZf2qklL1Dj/0J/qw=="],
+    "@lucide/svelte": ["@lucide/svelte@1.82.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-IpYZspXMi5EsdxQyad9hSg90FZOCQyQhfIyHUWFZJei8OY0uS82rnBDpIo76765lEaMa3rtjAtv/+If8tlpXaQ=="],
 
     "@mediabunny/ac3": ["@mediabunny/ac3@1.66.2", "", { "peerDependencies": { "mediabunny": "^1.0.0" } }, "sha512-nspvH3UOhGH3rNN8/uFOmYRAZ+T5bKVvLCUA9KD0ihzJnTLDVLmExmqlJwTJFRQCqFnw89o7pgZXnXx/zglVYA=="],
 
